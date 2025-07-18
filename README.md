@@ -1,106 +1,80 @@
-# **[Toy Project] Our Team's Development Guidelines**
-
-Our goal for this project is to learn not only the technology but also "how to work together." The rules below are the minimum promises to help us stay on track.
-
-## **1. Our Team Principles**
-
-> Code is cold, but our collaboration must be warm.
-
-  * **🚩 The 15-Minute Rule**
-      * If you're stuck on a problem for more than 15 minutes by yourself, share it immediately in the team channel. Struggling alone is the team's biggest loss of time.
-  * **🤝 Daily 5-Minute Scrum**
-      * Every day at a set time, for just 5 minutes, we each share: "What I did yesterday, What I'll do today, and Any blockers." This is our time to sync up on progress and see if anyone needs help.
-  * **💬 Code Has No Owner**
-      * A code review is not a time to criticize a teammate. It's a process to build a better product together. Instead of asking, "Why did you write this code like this?", let's create a culture of suggesting, "Wouldn't it be better if we changed it like this?"
-
-## **2. Git Workflow**
-
-> We will use the **GitHub Flow**, the simplest and most intuitive strategy.
-
-#### **🌿 Branching Strategy**
-
-  * `main`: The final version of our code that **must always be working.** **Never push directly to this branch.**
-  * `feature/feature-name`: This is where **all actual development happens.**
-      * When starting a new feature, always create a new branch from `main`.
-      * The branch name should clearly describe the feature in English.
-          * (Good Examples) `feature/login-ui`, `feature/add-join-button`
-          * (Bad Examples) `A-task`, `develop-1`
-
-#### **✍️ Commit Rules**
-
-> A commit message is a "development diary" for our future selves.
-
-  * All commit messages must be written in English using the following format:
-      * **`type: subject`**
-      * **Main Types:**
-          * `feat`: A new feature
-          * `fix`: A bug fix
-          * `style`: Formatting changes, missing semi-colons, etc. (no production code change)
-          * `docs`: Changes to documentation
-          * `refactor`: Code refactoring (improving code without changing functionality)
-      * **(Examples)**
-          * `feat: Add email login button to login screen`
-          * `fix: Correct password validation error`
-
-#### **🤝 Pull Request & Code Review**
-
-1.  When your work on a `feature` branch is complete, push it to GitHub.
-2.  On GitHub, create a **Pull Request (PR)** to the `main` branch.
-3.  In the PR description, briefly write what you did and how to test it.
-4.  At least **one other team member** (besides the author) must review the code and click **Approve**.
-5.  After getting approval, the person who created the PR clicks the **Merge** button to merge the code into the `main` branch.
-6.  Once merged, delete the `feature` branch you worked on.
-
-## **3. CI/CD Rules (Automation Rules)**
-
-> For this project, our CI/CD goal is **"Automated Mistake Prevention."**
-
-Instead of complex Continuous Deployment (CD), we will only set up Continuous Integration (CI) to **automatically check if there are problems with our code.**
-
-  * **Our CI Rule:** Whenever a Pull Request is created, **GitHub Actions** will automatically check the following:
-    1.  If the Flutter code follows the linting rules (`flutter analyze`)
-    2.  If the basic test codes pass (`flutter test`)
-  * If this check fails, the code cannot be merged into the `main` branch. This is our minimum safety net to automatically prevent buggy code from being merged.
+Of course. Here is the complete `README.md` file for your project, translated into English and formatted for Notion.
 
 -----
 
-#### **Attachment: `.github/workflows/ci.yml`**
+# **TOY PROJECT: Hatching the Egg of Failure**
 
-> Copy the content below and create a file named `ci.yml` inside the `.github/workflows` directory in your project folder. GitHub Actions will automatically detect and run this file.
+## **1. Project Overview**
 
-```yaml
-# .github/workflows/ci.yml
+  * **Project:** A mini-app where users 'hatch' and 'grow' an egg by recording their failures. Each record gives the egg experience points (EXP), and it evolves visually when it reaches certain milestones.
+  * **Goal:** To experience the core MVP development cycle (authentication, data creation/retrieval, UI updates) with Flutter and Firebase within 10 days and to establish a team collaboration process.
+  * **Timeline:** July 18, 2025 (Fri) \~ July 27, 2025 (Sun) / 10 days
+  * **Tech Stack:** `Flutter`, `Firebase (Authentication, Firestore)`, `Git/GitHub`, `Rive (Optional)`
 
-name: Flutter CI
+-----
 
-# This workflow runs whenever a Pull Request is created or updated for the main branch.
-on:
-  pull_request:
-    branches: [ main ]
+## **2. Team Roles & Responsibilities**
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+| Role | Member | Mission |
+| :--- | :--- | :--- |
+| 🎨 **UI/UX Authority Designer** | **Kwak-Kwak** | To take full responsibility for all visual elements, creating the "fun of growing" by visually implementing the egg's evolution. |
+| 🔐 **Access Control System Designer** | **yeye** | To build the system's backbone by defining the egg's growth rules and data, ensuring it is stored and managed securely. |
+| 🔗 **Feature & State Integration Lead**| **Jang-Jang**| To achieve "completion" by connecting the UI and the system, ensuring user actions translate into actual changes in the app. |
 
-    steps:
-      # 1. Check out the code from the repository.
-      - uses: actions/checkout@v3
+-----
 
-      # 2. Set up the Flutter environment.
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
+## **3. Rules & Workflow**
 
-      # 3. Download Flutter dependencies.
-      - run: flutter pub get
+> The rules below are the minimum promises to help us stay on track.
 
-      # 4. Check if the code is formatted correctly.
-      - run: flutter format --set-exit-if-changed .
+### **🤝 Our Principles**
 
-      # 5. Analyze the code for errors and style issues.
-      - run: flutter analyze
+  * **The 15-Minute Rule:** If you're stuck on a problem for more than 15 minutes, share it with the team immediately.
+  * **Daily Scrum:** Every morning, we share "what I did yesterday, what I'll do today, and any blockers" for 5 minutes.
+  * **Code Review:** A code review is a process to build a better product together, not to criticize a teammate.
 
-      # 6. Run test codes.
-      # (If you don't have any tests yet, comment out this line or create a basic test that passes.)
-      # - run: flutter test
-```
+### **🌿 Git Workflow**
+
+  * **Strategy:** We follow the simple **GitHub Flow**, using only a `main` branch and `feature/feature-name` branches.
+  * **Commit Rule:** Use the format `type: subject` (e.g., `feat: Add login button`).
+  * **Merge Method:** All code is merged into the `main` branch only through a **Pull Request (PR)**. A PR must be **Approved** by at least one other team member before merging.
+
+### **🛠️ Step-by-Step Git Guide**
+
+> **We do not use `Fork`.** Follow the steps below to work with `branches`.
+
+1.  **Starting New Work:** (Get your local machine up to date)
+    ```bash
+    git checkout main
+    git pull origin main
+    git checkout -b feature/your-feature-name
+    ```
+2.  **Saving & Sharing Your Work:** (Push your work to GitHub)
+    ```bash
+    git add .
+    git commit -m "feat: Commit message"
+    git push origin feature/your-feature-name
+    ```
+3.  **Finishing Your Work:** (Create a Pull Request on GitHub and Merge)
+      * Go to the GitHub repository page, create a `Pull Request`, get it reviewed by your team, and then `Merge`.
+
+### **🤖 CI (Continuous Integration)**
+
+  * Whenever a Pull Request is created, GitHub Actions will automatically check the code style and syntax to prevent problematic code from being merged into `main`.
+
+-----
+
+## **4. 10-Day Sprint Plan**
+
+| Day | Date | **Daily Team Goal** | 🎨 **Kwak-Kwak (UI/UX)** | 🔐 **yeye (System)** | 🔗 **Jang-Jang (Integration)** |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1**| Fri | **Kick-off & Design** | Design UI/UX concepts & egg evolution stages. | Draft the data model. | Finalize project goals & schedule. |
+| **2**| Sat | **Setup & Foundation** | Prepare image/animation assets for each egg state. | Finalize data model & create Firestore structure. | Set up Flutter project & Firebase integration. |
+| **3**| Sun | **Implement Auth** | Implement Login/Sign-up screen UI. | Write security rules for User data. | Implement email authentication logic. |
+| **4**| Mon | **Implement Main Screen** | Implement the main screen UI to display the egg's current state. | Design DB structure for the Egg (EXP, state). | Implement logic to navigate to the main screen after login. |
+| **5**| Tue | **'Record Failure' Feature**| Implement the input screen UI (Modal/Page) for recording failures. | Design the logic for increasing EXP when a failure is recorded. | Implement the "Write" button and the input screen functionality. |
+| **6**| Wed | **Connect Core Logic** | Implement UI logic to show different egg images based on EXP. | Write rules to change 'growth state' based on EXP. | **(Integrate)** Connect the "Write" action to call yeye's logic and update the DB. |
+| **7**| Thu | **Visualize Growth** | **(Integrate)** Connect the UI so the egg image actually changes based on the 'growth state' from the DB. | Support C-Team with necessary queries and testing. | **(Integrate)** Fetch the egg's current state and EXP from the DB in real-time and reflect it on the screen. |
+| **8**| Fri | **Integration & Code Review**| **(All)** Conduct full-feature integration testing (Sign-up -\> Record -\> Grow) and a team code review. | **(All)** Conduct full-feature integration testing and a team code review. | **(All)** Conduct full-feature integration testing and a team code review. |
+| **9**| Sat | **Deploy & Polish**| Polish the overall app design and improve animations. | Check for data stability, set initial values, etc. | Deploy the final product as a web app using Firebase Hosting. |
+| **10**| Sun | **Retrospective & Next Steps**| **(All)** Hold a project retrospective (KPT: Keep, Problem, Try) and document lessons learned for the real MVP. | **(All)** Hold a project retrospective and document lessons learned. | **(All)** Hold a project retrospective and document lessons learned. |
