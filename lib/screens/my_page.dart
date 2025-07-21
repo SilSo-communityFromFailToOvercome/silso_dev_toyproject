@@ -2,7 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../providers/pet_notifier.dart'; // PetNotifierProvider 임포트
+import '../providers/pet_notifier.dart';
+import '../models/pet.dart';
+import '../constants/app_constants.dart';
+import '../widgets/action_button_widget.dart';
+import '../widgets/pet_status_widget.dart';
 import './clean_page.dart';
 import './play_page.dart';
 import './feed_page.dart';
@@ -107,32 +111,92 @@ class MyPageScreen extends ConsumerWidget {
     );
   }
 
-  // 펫 상태 스케일 바 위젯
-  Widget _buildStatusScaleBar(String label, int value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: $value%',
-            style: const TextStyle(fontSize: 14),
-          ), // 폰트 테마에서 상속
-          const SizedBox(height: 4),
-          Container(
-            height: 10,
-            width: 100, // 스케일 바 고정 너비
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black, width: 1),
-              color: Colors.grey[300],
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(width: value / 100 * 100, color: color),
+  // 펫 상태 모달 표시
+  void _showStatusModal(BuildContext context, Pet pet) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Material(
+            color: Colors.transparent,
+            child: Stack(
+              children: [
+                // Transparent background
+                Container(color: Colors.transparent),
+                // Modal positioned at top right
+                Positioned(
+                  top: 80,
+                  right: 20,
+                  child: GestureDetector(
+                    onTap: () {}, // Prevent closing when tapping the modal itself
+                    child: Container(
+                      width: 160,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppConstants.primaryBorder, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Pet Status',
+                                style: GoogleFonts.pixelifySans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppConstants.primaryBorder,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => Navigator.of(context).pop(),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: AppConstants.primaryBorder,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          PetStatusWidget(
+                            label: '배고픔',
+                            value: pet.hunger,
+                            color: AppConstants.hungerColor,
+                          ),
+                          PetStatusWidget(
+                            label: '행복',
+                            value: pet.happiness,
+                            color: AppConstants.happinessColor,
+                          ),
+                          PetStatusWidget(
+                            label: '청결',
+                            value: pet.cleanliness,
+                            color: AppConstants.cleanlinessColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -159,9 +223,13 @@ class MyPageScreen extends ConsumerWidget {
       body: Stack(
         children: [
           Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                 // 펫 이름 표시 (큰 픽셀 폰트)
                 Text(
                   pet.name,
@@ -194,73 +262,55 @@ class MyPageScreen extends ConsumerWidget {
                   child: Image.asset(
                     getPetImagePath(pet.growthStage),
                     key: ValueKey(pet.growthStage),
-                    width: 250,
-                    height: 250,
+                    width: 200,
+                    height: 200,
                     fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 50),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildActionButton(
+                const SizedBox(height: 30),
+                ActionButtonRow(
+                  onCleanPressed: () {
+                    Navigator.push(
                       context,
-                      'CLEAN',
-                      Icons.cleaning_services,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CleanPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildActionButton(
+                      MaterialPageRoute(
+                        builder: (context) => const CleanPage(),
+                      ),
+                    );
+                  },
+                  onPlayPressed: () {
+                    Navigator.push(
                       context,
-                      'PLAY',
-                      Icons.videogame_asset,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PlayPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildActionButton(context, 'FEED', Icons.restaurant, () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FeedPage(),
-                        ),
-                      );
-                    }),
+                      MaterialPageRoute(
+                        builder: (context) => const PlayPage(),
+                      ),
+                    );
+                  },
+                  onFeedPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FeedPage(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 80), // Extra space for bottom navigation
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-          // 펫 상태 스케일 바 (우측 상단)
+          // 펫 상태 버튼 (우측 상단)
           Positioned(
-            top: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.8),
-                border: Border.all(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStatusScaleBar('배고픔', pet.hunger, Colors.orange),
-                  _buildStatusScaleBar('행복', pet.happiness, Colors.pink),
-                  _buildStatusScaleBar('청결', pet.cleanliness, Colors.lightBlue),
-                ],
-              ),
+            top: 20,
+            right: 20,
+            child: FloatingActionButton(
+              onPressed: () => _showStatusModal(context, pet),
+              backgroundColor: Colors.white,
+              foregroundColor: AppConstants.primaryBorder,
+              elevation: 4,
+              mini: true,
+              child: const Icon(Icons.pets, size: 20),
             ),
           ),
         ],
@@ -280,30 +330,4 @@ class MyPageScreen extends ConsumerWidget {
     );
   }
 
-  // 액션 버튼 위젯
-  Widget _buildActionButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    VoidCallback onPressed,
-  ) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blueGrey,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: Colors.black, width: 2),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 30, color: Colors.white),
-          const SizedBox(height: 8),
-          Text(label, style: Theme.of(context).textTheme.labelLarge),
-        ],
-      ),
-    );
-  }
 }

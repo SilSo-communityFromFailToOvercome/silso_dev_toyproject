@@ -5,11 +5,10 @@ import '../../services/auth_service.dart';
 class SignInScreen extends StatefulWidget {
   final VoidCallback showSignUpScreen;
 
-  const SignInScreen({Key? key, required this.showSignUpScreen})
-    : super(key: key);
+  const SignInScreen({super.key, required this.showSignUpScreen});
 
   @override
-  _SignInScreenState createState() => _SignInScreenState();
+  State<SignInScreen> createState() => _SignInScreenState();
 }
 
 class _SignInScreenState extends State<SignInScreen> {
