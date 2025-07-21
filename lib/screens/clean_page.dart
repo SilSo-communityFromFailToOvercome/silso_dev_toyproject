@@ -44,7 +44,7 @@ class _CleanPageState extends ConsumerState<CleanPage> {
           );
         },
         child: Container(
-          color: Colors.black.withOpacity(0.5), // 모달 배경 효과
+          color: Colors.black.withValues(alpha: 0.5), // 모달 배경 효과
           alignment: Alignment.center,
           child: Material(
             color: Colors.transparent, // Material 위젯의 배경을 투명하게
@@ -75,7 +75,7 @@ class _CleanPageState extends ConsumerState<CleanPage> {
                             focusedDay; // update `_focusedDay` here as well
                       });
                       // 로컬 데모에서는 날짜 기록 로직은 생략
-                      print('Selected day: $selectedDay');
+                      // Selected day: $selectedDay
                     },
                     calendarFormat: CalendarFormat.month,
                     headerStyle: const HeaderStyle(
@@ -84,7 +84,7 @@ class _CleanPageState extends ConsumerState<CleanPage> {
                     ),
                     calendarStyle: CalendarStyle(
                       todayDecoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.5),
+                        color: Colors.blue.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                       selectedDecoration: const BoxDecoration(

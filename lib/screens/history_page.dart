@@ -11,6 +11,7 @@ class PlayHistoryPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 로컬 reflectionsProvider에서 회고 기록 목록 가져오기
     final reflections = ref.watch(reflectionsProvider);
+    final pet = ref.watch(petNotifierProvider); // 펫 정보 가져오기
 
     return Scaffold(
       appBar: AppBar(
@@ -18,7 +19,7 @@ class PlayHistoryPage extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('@dummy_user history'), // 더미 사용자 닉네임
+        title: Text('${pet.name} history'), // 펫 이름 적용
         centerTitle: true,
       ),
       body: reflections.isEmpty
