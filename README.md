@@ -39,6 +39,31 @@ Of course. Here is the complete `README.md` file for your project, translated in
   * **Commit Rule:** Use the format `type: subject` (e.g., `feat: Add login button`).
   * **Merge Method:** All code is merged into the `main` branch only through a **Pull Request (PR)**. A PR must be **Approved** by at least one other team member before merging.
 
+
+#### **🌿 Branching Strategy**
+
+  * `main`: The final version of our code that **must always be working.** **Never push directly to this branch.**
+  * `feature/feature-name`: This is where **all actual development happens.**
+      * When starting a new feature, always create a new branch from `main`.
+      * The branch name should clearly describe the feature in English.
+          * (Good Examples) `feature/login-ui`, `feature/add-join-button`
+          * (Bad Examples) `A-task`, `develop-1`
+
+#### **✍️ Commit Rules**
+
+> A commit message is a "development diary" for our future selves.
+  * All commit messages must be written in English using the following format:
+      * **`type: subject`**
+      * **Main Types:**
+          * `feat`: A new feature
+          * `fix`: A bug fix
+          * `style`: Formatting changes, missing semi-colons, etc. (no production code change)
+          * `docs`: Changes to documentation
+          * `refactor`: Code refactoring (improving code without changing functionality)
+      * **(Examples)**
+          * `feat: Add email login button to login screen`
+          * `fix: Correct password validation error`
+
 ### **🛠️ Step-by-Step Git Guide**
 
 > **We do not use `Fork`.** Follow the steps below to work with `branches`.
