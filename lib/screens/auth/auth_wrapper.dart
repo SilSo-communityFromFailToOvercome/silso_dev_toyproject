@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../screens/my_page.dart';
+import '../user_checker.dart';
 import 'sign_in_screen.dart';
 import 'sign_up_screen.dart';
 
@@ -19,7 +19,7 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
-          return const MyPageScreen();
+          return const UserChecker();
         }
         return const AuthScreen();
       },

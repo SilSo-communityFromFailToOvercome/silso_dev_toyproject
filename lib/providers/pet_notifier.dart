@@ -67,18 +67,44 @@ class PetNotifier extends StateNotifier<Pet> {
     }
   }
 
+  // 레벨업 계산 (GAME_DETAIL.md 기준)
+  Map<String, int> _calculateLevelUp(int currentExp, int currentLevel) {
+    const int baseXpMultiplier = 50;
+    int exp = currentExp;
+    int level = currentLevel;
+    
+    // 연속 레벨업 처리 (여러 레벨을 한 번에 올릴 수 있음)
+    while (true) {
+      // Level 0는 특별 케이스 (첫 번째 레벨업까지 50 XP)
+      int requiredForNextLevel = (level == 0) ? 50 : (level + 1) * baseXpMultiplier;
+      
+      if (exp >= requiredForNextLevel) {
+        // 레벨업! 경험치 리셋하고 잉여 경험치 이월
+        exp = exp - requiredForNextLevel;
+        level++;
+      } else {
+        // 더 이상 레벨업 불가
+        break;
+      }
+    }
+    
+    return {
+      'level': level,
+      'experience': exp,
+    };
+  }
+
   // 펫 상태 업데이트 공통 로직
   void _updatePet(Pet updatedPet) {
-    // 성장 단계 계산
-    int newGrowthStage = updatedPet.growthStage;
-    if (updatedPet.experience >= 20 && updatedPet.growthStage < 1) {
-      newGrowthStage = 1;
-    } else if (updatedPet.experience >= 40 && updatedPet.growthStage < 2) {
-      newGrowthStage = 2;
-    } else if (updatedPet.experience >= 60 && updatedPet.growthStage < 3) {
-      newGrowthStage = 3;
-    }
-    state = updatedPet.copyWith(growthStage: newGrowthStage);
+    // 새로운 레벨링 시스템 적용
+    final levelData = _calculateLevelUp(updatedPet.experience, updatedPet.growthStage);
+    final newLevel = levelData['level']!;
+    final newExp = levelData['experience']!;
+    
+    state = updatedPet.copyWith(
+      growthStage: newLevel,
+      experience: newExp,
+    );
     
     // Firebase에 변경사항 저장
     _savePetData();
@@ -145,6 +171,11 @@ class PetNotifier extends StateNotifier<Pet> {
         timestamp: DateTime.now(),
       ),
     );
+  }
+
+  // 펫 이름 업데이트 메서드
+  void updatePetName(String newName) {
+    _updatePet(state.copyWith(name: newName));
   }
 }
 
