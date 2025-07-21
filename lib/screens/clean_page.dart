@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../providers/pet_notifier.dart'; // PetNotifierProvider 임포트
+import '../providers/pet_notifier.dart';
+import '../constants/app_constants.dart';
 
 class CleanPage extends ConsumerStatefulWidget {
   const CleanPage({super.key});
@@ -17,91 +18,203 @@ class _CleanPageState extends ConsumerState<CleanPage> {
 
   @override
   Widget build(BuildContext context) {
-    // PetNotifier를 읽어와서 performCleanAction 호출
     final petNotifier = ref.read(petNotifierProvider.notifier);
+    final pet = ref.watch(petNotifierProvider);
+    
+    // Check if already attended today
+    final today = DateTime.now();
+    final alreadyAttended = pet.lastAttendanceDate != null &&
+        pet.lastAttendanceDate!.year == today.year &&
+        pet.lastAttendanceDate!.month == today.month &&
+        pet.lastAttendanceDate!.day == today.day;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('청소하기 (출석체크)'),
+        title: const Text('Daily Check-in'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: GestureDetector(
-        onTap: () {
-          // 출석 체크 로직 (장장 담당)
-          petNotifier.performCleanAction(); // 로컬 상태 업데이트
-          Navigator.pop(context); // 메인 페이지로 돌아가기
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                '펫이 깨끗해졌어요! (+5 경험치, 청결도 증가)',
-                style: TextStyle(fontFamily: 'PixelFont'),
-              ),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.5), // 모달 배경 효과
-          alignment: Alignment.center,
-          child: Material(
-            color: Colors.transparent, // Material 위젯의 배경을 투명하게
-            child: Container(
-              margin: const EdgeInsets.all(20.0),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.black, width: 3),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('출석체크', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 16),
-                  TableCalendar(
-                    firstDay: DateTime.utc(2020, 1, 1),
-                    lastDay: DateTime.utc(2030, 12, 31),
-                    focusedDay: _focusedDay,
-                    selectedDayPredicate: (day) {
-                      return isSameDay(_selectedDay, day);
-                    },
-                    onDaySelected: (selectedDay, focusedDay) {
-                      setState(() {
-                        _selectedDay = selectedDay;
-                        _focusedDay =
-                            focusedDay; // update `_focusedDay` here as well
-                      });
-                      // 로컬 데모에서는 날짜 기록 로직은 생략
-                      // Selected day: $selectedDay
-                    },
-                    calendarFormat: CalendarFormat.month,
-                    headerStyle: const HeaderStyle(
-                      formatButtonVisible: false,
-                      titleCentered: true,
-                    ),
-                    calendarStyle: CalendarStyle(
-                      todayDecoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      selectedDecoration: const BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '화면을 탭하여 출석체크!',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
+      body: Container(
+        color: Colors.black.withOpacity(0.3),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppConstants.defaultPadding),
+              child: _buildCheckInCard(context, petNotifier, alreadyAttended),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckInCard(BuildContext context, PetNotifier petNotifier, bool alreadyAttended) {
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
+        side: const BorderSide(color: AppConstants.primaryBorder, width: 2),
+      ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Daily Attendance',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: AppConstants.defaultPadding),
+            if (alreadyAttended)
+              _buildAlreadyAttendedMessage(context)
+            else
+              _buildAttendanceCalendar(context),
+            const SizedBox(height: AppConstants.defaultPadding),
+            if (!alreadyAttended)
+              _buildCheckInButton(context, petNotifier)
+            else
+              _buildOkButton(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlreadyAttendedMessage(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppConstants.successColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+        border: Border.all(color: AppConstants.successColor),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.check_circle,
+            color: AppConstants.successColor,
+            size: 48,
+          ),
+          const SizedBox(height: AppConstants.smallPadding),
+          Text(
+            'Already checked in today!',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppConstants.successColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AppConstants.smallPadding),
+          Text(
+            'Come back tomorrow for your next check-in.',
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttendanceCalendar(BuildContext context) {
+    return Flexible(
+      child: TableCalendar(
+        firstDay: DateTime.utc(2020, 1, 1),
+        lastDay: DateTime.utc(2030, 12, 31),
+        focusedDay: _focusedDay,
+        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+        onDaySelected: (selectedDay, focusedDay) {
+          setState(() {
+            _selectedDay = selectedDay;
+            _focusedDay = focusedDay;
+          });
+        },
+        calendarFormat: CalendarFormat.month,
+        availableCalendarFormats: const {
+          CalendarFormat.month: 'Month',
+        },
+        headerStyle: const HeaderStyle(
+          formatButtonVisible: false,
+          titleCentered: true,
+          leftChevronIcon: Icon(Icons.chevron_left),
+          rightChevronIcon: Icon(Icons.chevron_right),
+        ),
+        calendarStyle: CalendarStyle(
+          todayDecoration: BoxDecoration(
+            color: AppConstants.cleanlinessColor.withOpacity(0.7),
+            shape: BoxShape.circle,
+          ),
+          selectedDecoration: const BoxDecoration(
+            color: AppConstants.cleanlinessColor,
+            shape: BoxShape.circle,
+          ),
+          weekendTextStyle: TextStyle(
+            color: Colors.red.shade400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckInButton(BuildContext context, PetNotifier petNotifier) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () => _performCheckIn(context, petNotifier),
+        icon: const Icon(Icons.cleaning_services),
+        label: const Text('Check In Now!'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppConstants.cleanlinessColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOkButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('OK'),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  void _performCheckIn(BuildContext context, PetNotifier petNotifier) {
+    petNotifier.performCleanAction();
+    Navigator.pop(context);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: AppConstants.smallPadding),
+            const Expanded(
+              child: Text(
+                'Pet is now clean! (+5 EXP, +20 Cleanliness)',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppConstants.successColor,
+        duration: AppConstants.snackBarDuration,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
         ),
       ),
     );
