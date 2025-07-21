@@ -45,4 +45,32 @@ class Pet {
       lastAttendanceDate: lastAttendanceDate ?? this.lastAttendanceDate,
     );
   }
+
+  // Firebase에서 데이터를 가져올 때 사용하는 factory 생성자
+  factory Pet.fromFirestore(Map<String, dynamic> data) {
+    return Pet(
+      name: data['name'] ?? 'My Pet',
+      experience: data['experience'] ?? 0,
+      growthStage: data['growthStage'] ?? 0,
+      lastReflectionDate: data['lastReflectionDate']?.toDate(),
+      hunger: data['hunger'] ?? 100,
+      happiness: data['happiness'] ?? 100,
+      cleanliness: data['cleanliness'] ?? 100,
+      lastAttendanceDate: data['lastAttendanceDate']?.toDate(),
+    );
+  }
+
+  // Firebase에 데이터를 저장할 때 사용하는 메서드
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'experience': experience,
+      'growthStage': growthStage,
+      'lastReflectionDate': lastReflectionDate,
+      'hunger': hunger,
+      'happiness': happiness,
+      'cleanliness': cleanliness,
+      'lastAttendanceDate': lastAttendanceDate,
+    };
+  }
 }

@@ -3,13 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart'; // UUID 생성을 위해 추가
 import '../models/pet.dart';
 import '../models/reflection.dart';
+import '../services/pet_service.dart';
+import '../screens/auth/auth_wrapper.dart';
 
 // Uuid 인스턴스 생성
 final uuid = Uuid();
 
+// PetService 인스턴스 제공
+final petServiceProvider = Provider<PetService>((ref) => PetService());
+
 // 펫 상태를 관리하는 StateNotifier
 class PetNotifier extends StateNotifier<Pet> {
-  PetNotifier() : super(_initialPet); // 초기 펫 상태 설정
+  final PetService _petService;
+  final String? _userId;
+  
+  PetNotifier(this._petService, this._userId) : super(_initialPet) {
+    _loadPetData(); // 초기화 시 Firebase에서 펫 데이터 로드
+  }
 
   // 초기 펫 상태 (더미 데이터)
   static final Pet _initialPet = Pet(
@@ -29,6 +39,34 @@ class PetNotifier extends StateNotifier<Pet> {
   // 외부에서 회고 기록에 접근할 수 있도록 getter 제공
   List<Reflection> get reflections => _reflections;
 
+  // Firebase에서 펫 데이터 로드
+  Future<void> _loadPetData() async {
+    if (_userId == null) return;
+    
+    try {
+      final pet = await _petService.getPet(_userId);
+      if (pet != null) {
+        state = pet;
+      } else {
+        // 펫이 존재하지 않으면 새로 생성
+        await _petService.createPet(_userId, _initialPet);
+      }
+    } catch (e) {
+      // 에러 발생 시 로컬 상태 유지 (디버그용 출력 제거)
+    }
+  }
+
+  // Firebase에 펫 데이터 저장
+  Future<void> _savePetData() async {
+    if (_userId == null) return;
+    
+    try {
+      await _petService.updatePet(_userId, state);
+    } catch (e) {
+      // 에러 발생해도 로컬 상태는 업데이트 유지 (디버그용 출력 제거)
+    }
+  }
+
   // 펫 상태 업데이트 공통 로직
   void _updatePet(Pet updatedPet) {
     // 성장 단계 계산
@@ -41,9 +79,9 @@ class PetNotifier extends StateNotifier<Pet> {
       newGrowthStage = 3;
     }
     state = updatedPet.copyWith(growthStage: newGrowthStage);
-    print(
-      '펫 업데이트 완료: EXP=${state.experience}, Stage=${state.growthStage}, Hunger=${state.hunger}, Happiness=${state.happiness}, Cleanliness=${state.cleanliness}',
-    );
+    
+    // Firebase에 변경사항 저장
+    _savePetData();
   }
 
   // CLEAN 액션 (출석체크)
@@ -55,7 +93,6 @@ class PetNotifier extends StateNotifier<Pet> {
         state.lastAttendanceDate!.year == today.year &&
         state.lastAttendanceDate!.month == today.month &&
         state.lastAttendanceDate!.day == today.day) {
-      print('오늘 이미 출석체크를 완료했습니다.');
       return; // 이미 출석했으면 아무것도 하지 않음
     }
 
@@ -111,9 +148,18 @@ class PetNotifier extends StateNotifier<Pet> {
   }
 }
 
-// 펫 상태를 제공하는 StateNotifierProvider
+// 펫 상태를 제공하는 StateNotifierProvider (Firebase 통합)
 final petNotifierProvider = StateNotifierProvider<PetNotifier, Pet>((ref) {
-  return PetNotifier();
+  final petService = ref.watch(petServiceProvider);
+  final authState = ref.watch(authStateChangesProvider);
+  
+  return authState.when(
+    data: (user) {
+      return PetNotifier(petService, user?.uid);
+    },
+    loading: () => PetNotifier(petService, null),
+    error: (error, stack) => PetNotifier(petService, null),
+  );
 });
 
 // 회고 기록 목록을 제공하는 Provider (로컬에서 관리)
@@ -125,5 +171,12 @@ final reflectionsProvider = Provider<List<Reflection>>((ref) {
     ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 });
 
-// 더미 사용자 UID (로컬 데모용) - 실제 사용되지 않지만, 기존 코드 구조 유지를 위해 남겨둠
-final userUidProvider = Provider<String>((ref) => 'dummy_user_id_123');
+// 사용자 UID 제공 (Firebase Auth에서 가져옴)
+final userUidProvider = Provider<String?>((ref) {
+  final authState = ref.watch(authStateChangesProvider);
+  return authState.when(
+    data: (user) => user?.uid,
+    loading: () => null,
+    error: (error, stack) => null,
+  );
+});
