@@ -1,7 +1,9 @@
 // lib/screens/play_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/pet_notifier.dart'; // PetNotifierProvider 임포트
+import '../providers/pet_notifier.dart';
+import '../models/pet.dart';
+import '../constants/app_constants.dart';
 import './history_page.dart';
 
 class PlayPage extends ConsumerStatefulWidget {
@@ -23,188 +25,419 @@ class _PlayPageState extends ConsumerState<PlayPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pet = ref.watch(petNotifierProvider); // 펫 정보 가져오기
+    final pet = ref.watch(petNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+      appBar: _buildAppBar(context),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppConstants.defaultPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildPetImage(pet),
+              const SizedBox(height: AppConstants.defaultPadding),
+              _buildQuestionBubble(context),
+              const SizedBox(height: AppConstants.defaultPadding),
+              _buildDivider(),
+              const SizedBox(height: AppConstants.defaultPadding),
+              _buildDiaryInputArea(context),
+              const SizedBox(height: AppConstants.largePadding),
+              _buildWriteButton(context),
+            ],
+          ),
         ),
-        title: const Text('일기쓰기'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history), // 기록 히스토리 아이콘
-            onPressed: () {
-              // PLAY 및 FEED 페이지 모두 PlayHistoryPage로 이동
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PlayHistoryPage(),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      title: const Text('Daily Diary'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.history),
+          tooltip: 'View diary history',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PlayHistoryPage(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPetImage(Pet pet) {
+    return Center(
+      child: Container(
+        width: AppConstants.smallPetImageSize,
+        height: AppConstants.smallPetImageSize,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppConstants.smallPetImageSize / 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppConstants.smallPetImageSize / 2),
+          child: Image.asset(
+            'assets/images/egg_state${pet.growthStage}.png',
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.grey.shade200,
+                child: const Icon(
+                  Icons.pets,
+                  size: 40,
+                  color: Colors.grey,
                 ),
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {
-              // TODO: 메뉴바 기능 구현
-            },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuestionBubble(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      decoration: BoxDecoration(
+        color: AppConstants.happinessColor.withOpacity(0.1),
+        border: Border.all(color: AppConstants.happinessColor, width: 2),
+        borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.chat_bubble_outline,
+            color: AppConstants.happinessColor,
+            size: 24,
+          ),
+          const SizedBox(width: AppConstants.smallPadding),
+          Expanded(
+            child: Text(
+              _reflectionQuestion,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppConstants.happinessColor,
+              ),
+            ),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Image.asset(
-                'assets/images/egg_state${pet.growthStage}.png', // 현재 펫 이미지
-                width: 100,
-                height: 100,
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.topLeft,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.yellow[100],
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  _reflectionQuestion,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Divider(color: Colors.black),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: () {
-                _showTextInputModal(context);
-              },
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey[200],
-                ),
-                alignment: Alignment.center,
-                child: _textController.text.isEmpty
-                    ? Text(
-                        '탭하여 일기를 작성하세요...',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                      )
-                    : Text(
-                        _textController.text,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        maxLines: 5,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-              ),
-            ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      height: 2,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppConstants.happinessColor.withOpacity(0.2),
+            AppConstants.happinessColor,
+            AppConstants.happinessColor.withOpacity(0.2),
           ],
         ),
       ),
     );
   }
 
-  // 텍스트 입력 모달 폼
+  Widget _buildDiaryInputArea(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showTextInputModal(context),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 150),
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400, width: 2),
+          borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
+          color: Colors.grey.shade50,
+        ),
+        child: _textController.text.isEmpty
+            ? _buildPlaceholderText(context)
+            : _buildDiaryText(context),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderText(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.edit_note,
+          size: 48,
+          color: Colors.grey.shade400,
+        ),
+        const SizedBox(height: AppConstants.smallPadding),
+        Text(
+          'Tap to write your diary...',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Colors.grey.shade600,
+            fontStyle: FontStyle.italic,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDiaryText(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: AppConstants.successColor,
+              size: 20,
+            ),
+            const SizedBox(width: AppConstants.smallPadding),
+            Text(
+              'Diary written',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppConstants.successColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppConstants.smallPadding),
+        Text(
+          _textController.text,
+          style: Theme.of(context).textTheme.bodyMedium,
+          maxLines: 6,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWriteButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () => _showTextInputModal(context),
+        icon: Icon(_textController.text.isEmpty ? Icons.edit : Icons.edit_note),
+        label: Text(_textController.text.isEmpty ? 'Write Diary' : 'Edit Diary'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppConstants.happinessColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Show text input modal for diary writing
   void _showTextInputModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        return Container(
+          margin: const EdgeInsets.all(AppConstants.defaultPadding),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-          child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + AppConstants.defaultPadding,
+              top: AppConstants.defaultPadding,
+              left: AppConstants.defaultPadding,
+              right: AppConstants.defaultPadding,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  _reflectionQuestion,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _textController,
-                  maxLines: 10,
-                  minLines: 5,
-                  decoration: InputDecoration(
-                    hintText: '오늘 하루 어땠는지 솔직하게 작성해주세요.',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_textController.text.isNotEmpty) {
-                      // 플레이 액션 수행 (장장 담당)
-                      ref
-                          .read(petNotifierProvider.notifier)
-                          .performPlayAction(
-                            _textController.text,
-                            _reflectionQuestion,
-                          );
-                      Navigator.pop(context); // 모달 닫기
-                      Navigator.pop(context); // 메인 페이지로 돌아가기
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            '일기 기록 완료! (+10 경험치, 행복도 증가)',
-                            style: TextStyle(fontFamily: 'PixelFont'),
-                          ),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('내용을 작성해주세요!'),
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    '완료하기',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ),
+                _buildModalHeader(context),
+                const SizedBox(height: AppConstants.defaultPadding),
+                _buildTextInput(context),
+                const SizedBox(height: AppConstants.defaultPadding),
+                _buildModalButtons(context),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildModalHeader(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade300,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(height: AppConstants.defaultPadding),
+        Container(
+          padding: const EdgeInsets.all(AppConstants.smallPadding),
+          decoration: BoxDecoration(
+            color: AppConstants.happinessColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+            border: Border.all(color: AppConstants.happinessColor),
+          ),
+          child: Text(
+            _reflectionQuestion,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppConstants.happinessColor,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextInput(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(
+        maxHeight: 200,
+        minHeight: 120,
+      ),
+      child: TextField(
+        controller: _textController,
+        maxLines: null,
+        expands: true,
+        textAlignVertical: TextAlignVertical.top,
+        decoration: InputDecoration(
+          hintText: 'Write about your day honestly...',
+          hintStyle: TextStyle(
+            color: Colors.grey.shade600,
+            fontStyle: FontStyle.italic,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+            borderSide: const BorderSide(color: AppConstants.happinessColor, width: 2),
+          ),
+          contentPadding: const EdgeInsets.all(AppConstants.defaultPadding),
+        ),
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
+    );
+  }
+
+  Widget _buildModalButtons(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              side: const BorderSide(color: Colors.grey),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+              ),
+            ),
+            child: const Text('Cancel'),
+          ),
+        ),
+        const SizedBox(width: AppConstants.defaultPadding),
+        Expanded(
+          flex: 2,
+          child: ElevatedButton(
+            onPressed: () => _submitDiary(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppConstants.happinessColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+              ),
+            ),
+            child: const Text(
+              'Save Diary',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _submitDiary(BuildContext context) {
+    if (_textController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.warning, color: Colors.white),
+              SizedBox(width: AppConstants.smallPadding),
+              Text('Please write something before saving!'),
+            ],
+          ),
+          backgroundColor: AppConstants.warningColor,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    ref.read(petNotifierProvider.notifier).performPlayAction(
+      _textController.text.trim(),
+      _reflectionQuestion,
+    );
+    
+    Navigator.pop(context); // Close modal
+    Navigator.pop(context); // Return to main page
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: AppConstants.smallPadding),
+            Expanded(
+              child: Text(
+                'Diary saved! (+10 EXP, +20 Happiness)',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppConstants.successColor,
+        duration: AppConstants.snackBarDuration,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+        ),
+      ),
     );
   }
 }
