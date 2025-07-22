@@ -4,9 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/pet_notifier.dart';
 import '../models/reflection.dart';
 import '../constants/app_constants.dart';
+import 'package:intl/intl.dart';
 
 class PlayHistoryPage extends ConsumerWidget {
   const PlayHistoryPage({super.key});
+
+  /// Format timestamp to YY:MM:DD HH:MM format
+  String _formatTimestamp(DateTime timestamp) {
+    return DateFormat('yyyy-MM-dd HH:mm').format(timestamp);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -158,7 +164,7 @@ class PlayHistoryPage extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${reflection.timestamp} • ${reflection.timestamp}',
+                _formatTimestamp(reflection.timestamp),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.grey.shade600,
                 ),
@@ -301,10 +307,14 @@ class PlayHistoryPage extends ConsumerWidget {
             color: Colors.grey.shade600,
           ),
           const SizedBox(width: 4),
-          Text(
-            'Written on ${reflection.timestamp} at ${reflection.timestamp}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey.shade600,
+          Expanded(
+            child: Text(
+              'Written on ${_formatTimestamp(reflection.timestamp)}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],

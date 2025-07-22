@@ -64,11 +64,13 @@ class _PetNamingScreenState extends ConsumerState<PetNamingScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5DC), // 베이지 배경
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Add flexible top spacing for centering effect
+              SizedBox(height: MediaQuery.of(context).size.height * 0.15),
               // Title
               Text(
                 '🥚 펫 이름 짓기',
@@ -173,6 +175,8 @@ class _PetNamingScreenState extends ConsumerState<PetNamingScreen> {
                         ),
                 ),
               ),
+              // Add bottom spacing for keyboard clearance
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 40),
             ],
           ),
         ),
