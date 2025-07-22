@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../providers/pet_notifier.dart';
 import '../constants/app_constants.dart';
+import '../widgets/lottie_clean_animation_widget.dart';
 
 class CleanPage extends ConsumerStatefulWidget {
   const CleanPage({super.key});
@@ -182,13 +183,41 @@ class _CleanPageState extends ConsumerState<CleanPage> {
   Widget _buildOkButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('OK'),
+      child: ElevatedButton.icon(
+        onPressed: () => _showAlreadyAttendedAnimation(context),
+        icon: const Icon(Icons.cleaning_services),
+        label: const Text('Clean Again!'),
         style: ElevatedButton.styleFrom(
+          backgroundColor: AppConstants.cleanlinessColor.withOpacity(0.7),
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+          ),
         ),
       ),
+    );
+  }
+  
+  /// Show Lottie animation for already attended case
+  /// 
+  /// IMPROVEMENT: Enhanced UX for repeated clean attempts
+  /// - Shows same Lottie animation with different message
+  /// - Quick dismiss on tap with friendly reminder
+  /// - Maintains visual consistency with first-time experience
+  void _showAlreadyAttendedAnimation(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (BuildContext dialogContext) {
+        return LottieCleanAnimationWidget.alreadyCompleted(
+          onAnimationComplete: () {
+            // Close the clean page after animation
+            Navigator.pop(context);
+          },
+        );
+      },
     );
   }
 
