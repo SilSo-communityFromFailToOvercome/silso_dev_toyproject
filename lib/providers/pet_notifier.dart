@@ -188,6 +188,9 @@ class PetNotifier extends StateNotifier<Pet> {
         experience: state.experience + 5, // +5 경험치
         cleanliness: (state.cleanliness + 20).clamp(0, 100), // 청결도 +20 (최대 100)
         lastAttendanceDate: today, // 마지막 출석 날짜 기록
+        // Animation trigger for CLEAN task completion
+        lastCompletedTask: 'clean',
+        animationTriggerTime: DateTime.now(),
       ),
     );
   }
@@ -202,6 +205,9 @@ class PetNotifier extends StateNotifier<Pet> {
         experience: state.experience + 10, // +10 경험치
         happiness: (state.happiness + 20).clamp(0, 100), // 행복도 +20 (최대 100)
         lastReflectionDate: DateTime.now(),
+        // Animation trigger for PLAY task completion
+        lastCompletedTask: 'play',
+        animationTriggerTime: DateTime.now(),
       ),
     );
     
@@ -232,6 +238,9 @@ class PetNotifier extends StateNotifier<Pet> {
         experience: state.experience + 15, // +15 경험치
         hunger: (state.hunger + 20).clamp(0, 100), // 배고픔 +20 (최대 100)
         lastReflectionDate: DateTime.now(),
+        // Animation trigger for FEED task completion
+        lastCompletedTask: 'feed',
+        animationTriggerTime: DateTime.now(),
       ),
     );
     
@@ -295,6 +304,13 @@ class PetNotifier extends StateNotifier<Pet> {
   // 펫 이름 업데이트 메서드
   void updatePetName(String newName) {
     _updatePet(state.copyWith(name: newName));
+  }
+
+  /// Clear animation trigger state after animation has been shown
+  /// This prevents the same animation from playing multiple times
+  void clearAnimationState() {
+    state = state.clearAnimationState();
+    _savePetData();
   }
 }
 
