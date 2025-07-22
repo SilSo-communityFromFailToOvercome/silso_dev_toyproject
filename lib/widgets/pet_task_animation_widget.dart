@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/pet.dart';
 import '../providers/pet_notifier.dart';
+import 'lottie_clean_animation_widget.dart';
 
 /// Pet Task Animation Widget
 /// 
@@ -361,7 +362,14 @@ class _PetTaskAnimationWidgetState extends ConsumerState<PetTaskAnimationWidget>
   }
 }
 
-/// Simple animation overlay widget for easier integration
+/// Enhanced animation overlay widget with Lottie integration
+/// 
+/// INTEGRATION ENHANCEMENT: Now supports Lottie clean animations
+/// - Detects when currentAnimationType == 'cleaning'
+/// - Shows LottieCleanAnimationWidget as modal overlay for clean tasks
+/// - Maintains existing built-in animations for other tasks (play, feed)
+/// - Coordinates timing between Lottie and existing animation system
+/// - Unified completion callback system preserves existing behavior
 class PetAnimationOverlay extends ConsumerWidget {
   final Pet pet;
   final String basePetImagePath;
@@ -374,6 +382,23 @@ class PetAnimationOverlay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Check if we should show Lottie clean animation
+    if (pet.shouldShowTaskAnimation && pet.currentAnimationType == 'cleaning') {
+      // Show Lottie animation as modal overlay after a brief delay
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showLottieCleanAnimation(context);
+      });
+      
+      // Return static pet image underneath modal
+      return Image.asset(
+        basePetImagePath,
+        width: 200,
+        height: 200,
+        fit: BoxFit.contain,
+      );
+    }
+    
+    // For non-cleaning animations, use existing system
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       transitionBuilder: (Widget child, Animation<double> animation) {
@@ -387,6 +412,26 @@ class PetAnimationOverlay extends ConsumerWidget {
           // Animation completed - state already cleared by widget
         },
       ),
+    );
+  }
+  
+  /// Show Lottie clean animation modal
+  /// 
+  /// DESIGN DECISION: Modal overlay pattern
+  /// - Non-intrusive celebration of clean task completion
+  /// - Uses existing navigation stack for smooth integration
+  /// - Automatically clears animation state when complete
+  void _showLottieCleanAnimation(BuildContext context) {
+    // Import the Lottie widget
+    // ignore: unused_import
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (BuildContext dialogContext) {
+        return const LottieCleanAnimationWidget();
+      },
     );
   }
 }
