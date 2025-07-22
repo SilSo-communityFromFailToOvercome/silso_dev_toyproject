@@ -55,14 +55,16 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Sign In', style: GoogleFonts.pixelifySans())),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Add top spacing for centering effect
+                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
               Text(
                 'Welcome Back!',
                 style: GoogleFonts.pixelifySans(
@@ -151,7 +153,10 @@ class _SignInScreenState extends State<SignInScreen> {
                   style: GoogleFonts.pixelifySans(),
                 ),
               ),
-            ],
+              // Add bottom spacing for keyboard clearance
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
+              ],
+            ),
           ),
         ),
       ),

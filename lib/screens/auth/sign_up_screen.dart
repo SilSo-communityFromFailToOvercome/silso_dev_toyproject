@@ -65,15 +65,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       appBar: AppBar(
         title: Text('Create Account', style: GoogleFonts.pixelifySans()),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SafeArea(
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
                 Text(
                   'Create Account',
                   style: GoogleFonts.pixelifySans(
@@ -180,6 +181,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     style: GoogleFonts.pixelifySans(),
                   ),
                 ),
+                // Add bottom spacing for keyboard clearance
+                SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20),
               ],
             ),
           ),
