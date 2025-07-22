@@ -1,4 +1,5 @@
 // lib/providers/pet_notifier.dart
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart'; // UUID 생성을 위해 추가
 import '../models/pet.dart';
@@ -21,9 +22,17 @@ class PetNotifier extends StateNotifier<Pet> {
   final PetService _petService;
   final ReflectionService _reflectionService;
   final String? _userId;
+  Timer? _decayTimer;
   
   PetNotifier(this._petService, this._reflectionService, this._userId) : super(_initialPet) {
     _loadPetData(); // 초기화 시 Firebase에서 펫 데이터 로드
+    _startDecayTimer(); // decay 타이머 시작
+  }
+
+  @override
+  void dispose() {
+    _decayTimer?.cancel();
+    super.dispose();
   }
 
   // 초기 펫 상태 (더미 데이터)
@@ -46,13 +55,54 @@ class PetNotifier extends StateNotifier<Pet> {
     try {
       final pet = await _petService.getPet(_userId);
       if (pet != null) {
-        state = pet;
+        // 로드된 펫에 decay 적용
+        final decayedPet = pet.applyDecay();
+        state = decayedPet;
+        
+        // decay가 적용되었다면 Firebase에 저장
+        if (pet != decayedPet) {
+          _savePetData();
+        }
       } else {
         // 펫이 존재하지 않으면 새로 생성
         await _petService.createPet(_userId, _initialPet);
       }
     } catch (e) {
       // 에러 발생 시 로컬 상태 유지 (디버그용 출력 제거)
+    }
+  }
+
+  // Decay 타이머 시작 (TESTING: 30초마다 실행)
+  void _startDecayTimer() {
+    _decayTimer?.cancel();
+    _decayTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _applyRealtimeDecay();
+    });
+  }
+
+  // 실시간 decay 적용
+  void _applyRealtimeDecay() {
+    print('DECAY TIMER: Applying decay at ${DateTime.now()}');
+    final oldStats = 'H:${state.hunger} Ha:${state.happiness} C:${state.cleanliness}';
+    final decayedPet = state.applyDecay();
+    final newStats = 'H:${decayedPet.hunger} Ha:${decayedPet.happiness} C:${decayedPet.cleanliness}';
+    print('DECAY: $oldStats -> $newStats');
+    
+    if (state != decayedPet) {
+      state = decayedPet;
+      _savePetData();
+      print('DECAY: State updated!');
+    } else {
+      print('DECAY: No change detected');
+    }
+  }
+
+  // 수동으로 decay 적용 (액션 전에 호출)
+  void _ensureDecayApplied() {
+    final decayedPet = state.applyDecay();
+    if (state != decayedPet) {
+      state = decayedPet;
+      _savePetData();
     }
   }
 
@@ -101,9 +151,11 @@ class PetNotifier extends StateNotifier<Pet> {
     final newLevel = levelData['level']!;
     final newExp = levelData['experience']!;
     
+    // lastUpdateTime을 현재 시간으로 업데이트
     state = updatedPet.copyWith(
       growthStage: newLevel,
       experience: newExp,
+      lastUpdateTime: DateTime.now(),
     );
     
     // Firebase에 변경사항 저장
@@ -112,6 +164,9 @@ class PetNotifier extends StateNotifier<Pet> {
 
   // CLEAN 액션 (출석체크)
   void performCleanAction() {
+    // 액션 전에 decay 적용
+    _ensureDecayApplied();
+    
     final today = DateTime.now();
 
     // 오늘 이미 출석했는지 확인
@@ -133,6 +188,9 @@ class PetNotifier extends StateNotifier<Pet> {
 
   // PLAY 액션 (일기 쓰기)
   Future<void> performPlayAction(String answer, String question) async {
+    // 액션 전에 decay 적용
+    _ensureDecayApplied();
+    
     _updatePet(
       state.copyWith(
         experience: state.experience + 10, // +10 경험치
@@ -160,6 +218,9 @@ class PetNotifier extends StateNotifier<Pet> {
 
   // FEED 액션 (주제 회고)
   Future<void> performFeedAction(String answer, String question) async {
+    // 액션 전에 decay 적용
+    _ensureDecayApplied();
+    
     _updatePet(
       state.copyWith(
         experience: state.experience + 15, // +15 경험치

@@ -304,13 +304,51 @@ class MyPageScreen extends ConsumerWidget {
           Positioned(
             top: 20,
             right: 20,
-            child: FloatingActionButton(
-              onPressed: () => _showStatusModal(context, pet),
-              backgroundColor: Colors.white,
-              foregroundColor: AppConstants.primaryBorder,
-              elevation: 4,
-              mini: true,
-              child: const Icon(Icons.pets, size: 20),
+            child: Stack(
+              children: [
+                FloatingActionButton(
+                  onPressed: () => _showStatusModal(context, pet),
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppConstants.primaryBorder,
+                  elevation: 4,
+                  mini: true,
+                  child: const Icon(Icons.pets, size: 20),
+                ),
+                // Status warning indicator
+                if (pet.hasCriticalStats)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                      child: const Icon(
+                        Icons.priority_high,
+                        size: 8,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                else if (pet.hasLowStats)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],

@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
+import '../models/pet.dart';
 
 /// Widget for displaying pet status bars (experience, hunger, happiness, cleanliness)
 class PetStatusWidget extends StatelessWidget {
@@ -22,6 +23,16 @@ class PetStatusWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayValue = value.clamp(0, 100);
     final isLow = displayValue < 30;
+    final isCritical = displayValue < 10;
+    final statColor = Color(Pet.getStatColor(displayValue));
+    
+    // Choose appropriate icon based on stat level and type
+    IconData? statusIcon;
+    if (isCritical) {
+      statusIcon = Icons.emergency;
+    } else if (isLow) {
+      statusIcon = Icons.warning_amber_rounded;
+    }
     
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -34,7 +45,7 @@ class PetStatusWidget extends StatelessWidget {
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: isLow ? AppConstants.warningColor : null,
+                  color: isCritical ? Colors.red.shade700 : (isLow ? AppConstants.warningColor : null),
                 ),
               ),
               if (showPercentage) ...[
@@ -43,16 +54,20 @@ class PetStatusWidget extends StatelessWidget {
                   '$displayValue%',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isLow ? AppConstants.warningColor : color,
+                    color: statColor,
                   ),
                 ),
               ],
-              if (isLow) ...[
+              if (statusIcon != null) ...[
                 const SizedBox(width: 4),
-                Icon(
-                  Icons.warning_amber_rounded,
-                  size: 14,
-                  color: AppConstants.warningColor,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(
+                    statusIcon,
+                    key: ValueKey(statusIcon),
+                    size: isCritical ? 16 : 14,
+                    color: isCritical ? Colors.red.shade700 : AppConstants.warningColor,
+                  ),
                 ),
               ],
             ],
@@ -62,7 +77,10 @@ class PetStatusWidget extends StatelessWidget {
             height: AppConstants.statusBarHeight,
             width: AppConstants.statusBarWidth,
             decoration: BoxDecoration(
-              border: Border.all(color: AppConstants.primaryBorder, width: 1),
+              border: Border.all(
+                color: isCritical ? Colors.red.shade700 : AppConstants.primaryBorder, 
+                width: isCritical ? 2 : 1,
+              ),
               borderRadius: BorderRadius.circular(AppConstants.statusBarHeight / 2),
               color: Colors.grey.shade200,
             ),
@@ -76,19 +94,60 @@ class PetStatusWidget extends StatelessWidget {
                   width: (displayValue / 100) * AppConstants.statusBarWidth,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: isLow 
-                          ? [AppConstants.warningColor, AppConstants.warningColor.withValues(alpha: 0.7)]
-                          : [color, color.withValues(alpha: 0.7)],
+                      colors: [statColor, statColor.withValues(alpha: 0.7)],
                     ),
                   ),
+                  child: isCritical
+                      ? Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [statColor, statColor.withValues(alpha: 0.7)],
+                            ),
+                          ),
+                          child: CustomPaint(
+                            painter: _PulsingPainter(),
+                            size: Size.infinite,
+                          ),
+                        )
+                      : null,
                 ),
               ),
             ),
           ),
+          // Status message for critical/low stats
+          if (isCritical || isLow) ...[
+            const SizedBox(height: 2),
+            Text(
+              isCritical ? 'Critical! Needs immediate attention!' : 'Low - needs care',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontSize: 10,
+                color: isCritical ? Colors.red.shade700 : Colors.orange.shade600,
+                fontWeight: FontWeight.w500,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+}
+
+/// Custom painter for pulsing effect on critical stats
+class _PulsingPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.3)
+      ..blendMode = BlendMode.overlay;
+    
+    // Create a simple pulsing overlay
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    canvas.drawRect(rect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 /// Container widget for grouping multiple status bars
