@@ -17,6 +17,15 @@ class Pet {
   final DateTime? followButtonLastActivated; // 마지막 Follow 버튼 활성화 시간
   final bool followButtonIsActive; // Follow 버튼 현재 활성화 상태
   
+  // Pet Animation System Fields
+  /// Tracks the last completed task for triggering appropriate animations
+  /// Values: 'clean', 'play', 'feed', or null
+  final String? lastCompletedTask; // 마지막 완료된 작업 타입 (애니메이션 트리거용)
+  
+  /// Timestamp when the animation should be triggered
+  /// Used to determine if animation should play when returning to MyPage
+  final DateTime? animationTriggerTime; // 애니메이션 트리거 시간
+  
   // Decay rates (points per hour) - TESTING: Extreme decay for demonstration
   static const double hungerDecayRate = 1200.0; // TESTING: -10 points every 30 seconds
   static const double happinessDecayRate = 1200.0; // TESTING: -10 points every 30 seconds
@@ -45,6 +54,8 @@ class Pet {
     DateTime? lastUpdateTime,
     this.followButtonLastActivated,
     this.followButtonIsActive = false,
+    this.lastCompletedTask,
+    this.animationTriggerTime,
   }) : lastUpdateTime = lastUpdateTime ?? DateTime.now();
 
   // Pet 객체 복사 및 변경을 위한 copyWith 메서드
@@ -60,6 +71,8 @@ class Pet {
     DateTime? lastUpdateTime,
     DateTime? followButtonLastActivated,
     bool? followButtonIsActive,
+    String? lastCompletedTask,
+    DateTime? animationTriggerTime,
   }) {
     return Pet(
       name: name ?? this.name,
@@ -73,6 +86,8 @@ class Pet {
       lastUpdateTime: lastUpdateTime ?? this.lastUpdateTime,
       followButtonLastActivated: followButtonLastActivated ?? this.followButtonLastActivated,
       followButtonIsActive: followButtonIsActive ?? this.followButtonIsActive,
+      lastCompletedTask: lastCompletedTask ?? this.lastCompletedTask,
+      animationTriggerTime: animationTriggerTime ?? this.animationTriggerTime,
     );
   }
 
@@ -90,6 +105,8 @@ class Pet {
       lastUpdateTime: data['lastUpdateTime']?.toDate() ?? DateTime.now(),
       followButtonLastActivated: data['followButtonLastActivated']?.toDate(),
       followButtonIsActive: data['followButtonIsActive'] ?? false,
+      lastCompletedTask: data['lastCompletedTask'],
+      animationTriggerTime: data['animationTriggerTime']?.toDate(),
     );
   }
 
@@ -107,6 +124,8 @@ class Pet {
       'lastUpdateTime': Timestamp.fromDate(lastUpdateTime),
       'followButtonLastActivated': followButtonLastActivated != null ? Timestamp.fromDate(followButtonLastActivated!) : null,
       'followButtonIsActive': followButtonIsActive,
+      'lastCompletedTask': lastCompletedTask,
+      'animationTriggerTime': animationTriggerTime != null ? Timestamp.fromDate(animationTriggerTime!) : null,
     };
   }
 
@@ -279,6 +298,51 @@ class Pet {
     return state['isActive'] 
         ? 'Active for $formattedTime remaining'
         : 'Available in $formattedTime';
+  }
+  
+  /// Pet Animation System Helper Methods
+  /// 
+  /// These methods support the task completion animation system that triggers
+  /// contextual pet animations when users return to MyPage after completing tasks.
+  
+  /// Check if an animation should be triggered based on recent task completion
+  /// Returns true if there's a pending animation within the last 10 seconds
+  bool get shouldShowTaskAnimation {
+    if (lastCompletedTask == null || animationTriggerTime == null) {
+      return false;
+    }
+    
+    final now = DateTime.now();
+    final timeSinceAnimation = now.difference(animationTriggerTime!);
+    
+    // Show animation if triggered within last 10 seconds
+    return timeSinceAnimation.inSeconds <= 10;
+  }
+  
+  /// Get the animation type based on the last completed task
+  /// Returns animation identifier for the UI to determine which animation to play
+  String? get currentAnimationType {
+    if (!shouldShowTaskAnimation) return null;
+    
+    switch (lastCompletedTask) {
+      case 'clean':
+        return 'cleaning'; // Cleaning/attendance animation
+      case 'play':
+        return 'playing'; // Playful/happy animation  
+      case 'feed':
+        return 'eating'; // Feeding/eating animation
+      default:
+        return null;
+    }
+  }
+  
+  /// Clear animation state after animation has been shown
+  /// Should be called after the animation completes to prevent re-triggering
+  Pet clearAnimationState() {
+    return copyWith(
+      lastCompletedTask: null,
+      animationTriggerTime: null,
+    );
   }
   
   // Stat 상태별 색상 코드

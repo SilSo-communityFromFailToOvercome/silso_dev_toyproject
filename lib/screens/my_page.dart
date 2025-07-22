@@ -8,6 +8,7 @@ import '../constants/app_constants.dart';
 import '../widgets/action_button_widget.dart';
 import '../widgets/pet_status_widget.dart';
 import '../widgets/follow_button_widget.dart';
+import '../widgets/pet_task_animation_widget.dart';
 import './clean_page.dart';
 import './play_page.dart';
 import './feed_page.dart';
@@ -253,20 +254,22 @@ class MyPageScreen extends ConsumerWidget {
                 // 경험치 바 추가
                 _buildExperienceBar(pet.experience, pet.growthStage),
                 const SizedBox(height: 15),
-                // 펫 이미지 표시 (곽곽 담당)
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder:
-                      (Widget child, Animation<double> animation) {
-                        return ScaleTransition(scale: animation, child: child);
-                      },
-                  child: Image.asset(
-                    getPetImagePath(pet.growthStage),
-                    key: ValueKey(pet.growthStage),
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.contain,
-                  ),
+                // 펫 이미지 표시 with Task Animation System
+                // 
+                // ANIMATION INTEGRATION:
+                // When users complete tasks (CLEAN/PLAY/FEED) and return to MyPage,
+                // the PetAnimationOverlay automatically detects pet.shouldShowTaskAnimation
+                // and displays contextual animations based on pet.currentAnimationType:
+                // - 'cleaning': Sparkle effect + scale animation (attendance completed)
+                // - 'playing': Bounce + rotation + hearts (diary completed) 
+                // - 'eating': Glow effect + scale pulse (reflection completed)
+                // 
+                // The animation system uses Flutter's built-in AnimatedSwitcher combined
+                // with custom animation sequences using the existing pet evolution images.
+                // After animation completes, state is automatically cleared to prevent re-triggering.
+                PetAnimationOverlay(
+                  pet: pet,
+                  basePetImagePath: getPetImagePath(pet.growthStage),
                 ),
                 const SizedBox(height: 30),
                 ActionButtonRow(
