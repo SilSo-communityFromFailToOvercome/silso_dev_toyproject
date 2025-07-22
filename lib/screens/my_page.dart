@@ -7,6 +7,7 @@ import '../models/pet.dart';
 import '../constants/app_constants.dart';
 import '../widgets/action_button_widget.dart';
 import '../widgets/pet_status_widget.dart';
+import '../widgets/follow_button_widget.dart';
 import './clean_page.dart';
 import './play_page.dart';
 import './feed_page.dart';
@@ -294,6 +295,11 @@ class MyPageScreen extends ConsumerWidget {
                     );
                   },
                 ),
+                const SizedBox(height: 20),
+                
+                // Follow Feature Button Section
+                const FollowButtonWidget(),
+                
                 const SizedBox(height: 80), // Extra space for bottom navigation
                   ],
                 ),
