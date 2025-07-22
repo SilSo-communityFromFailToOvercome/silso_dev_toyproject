@@ -88,10 +88,16 @@ class PetNotifier extends StateNotifier<Pet> {
     final newStats = 'H:${decayedPet.hunger} Ha:${decayedPet.happiness} C:${decayedPet.cleanliness}';
     print('DECAY: $oldStats -> $newStats');
     
-    if (state != decayedPet) {
-      state = decayedPet;
+    // Also update follow button state during timer tick
+    final buttonState = decayedPet.getFollowButtonState();
+    final updatedPet = decayedPet.copyWith(
+      followButtonIsActive: buttonState['isActive'],
+    );
+    
+    if (state != updatedPet) {
+      state = updatedPet;
       _savePetData();
-      print('DECAY: State updated!');
+      print('DECAY: State updated! Follow button active: ${buttonState['isActive']}');
     } else {
       print('DECAY: No change detected');
     }
@@ -243,6 +249,46 @@ class PetNotifier extends StateNotifier<Pet> {
       } catch (e) {
         // 에러 발생해도 펫 상태는 업데이트 유지
       }
+    }
+  }
+
+  /// FOLLOW BUTTON ACTION
+  /// 
+  /// Handles the follow button press action.
+  /// The button can only be pressed when it's in the active state.
+  /// When pressed, it starts/resets the timer cycle and updates the activation time.
+  void performFollowAction() {
+    // 액션 전에 decay 적용
+    _ensureDecayApplied();
+    
+    // Check if button is currently active
+    final buttonState = state.getFollowButtonState();
+    if (!buttonState['isActive']) {
+      return; // Button is not active, ignore press
+    }
+    
+    // Button is active - process the follow action
+    _updatePet(
+      state.copyWith(
+        // Update follow button state - start new cycle
+        followButtonLastActivated: DateTime.now(),
+        followButtonIsActive: true,
+      ),
+    );
+  }
+
+  /// Update follow button state based on timer
+  /// This method is called by the real-time timer to update the button state
+  void updateFollowButtonState() {
+    final buttonState = state.getFollowButtonState();
+    final isCurrentlyActive = buttonState['isActive'];
+    
+    // Update the state if it has changed
+    if (state.followButtonIsActive != isCurrentlyActive) {
+      state = state.copyWith(
+        followButtonIsActive: isCurrentlyActive,
+      );
+      _savePetData();
     }
   }
 
