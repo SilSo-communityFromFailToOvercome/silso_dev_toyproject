@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart'; // UUID 생성을 위해 추가
 import '../models/pet.dart';
 import '../models/reflection.dart';
 import '../services/pet_service.dart';
+import '../services/reflection_service.dart';
 import '../screens/auth/auth_wrapper.dart';
 
 // Uuid 인스턴스 생성
@@ -12,12 +13,16 @@ final uuid = Uuid();
 // PetService 인스턴스 제공
 final petServiceProvider = Provider<PetService>((ref) => PetService());
 
+// ReflectionService 인스턴스 제공
+final reflectionServiceProvider = Provider<ReflectionService>((ref) => ReflectionService());
+
 // 펫 상태를 관리하는 StateNotifier
 class PetNotifier extends StateNotifier<Pet> {
   final PetService _petService;
+  final ReflectionService _reflectionService;
   final String? _userId;
   
-  PetNotifier(this._petService, this._userId) : super(_initialPet) {
+  PetNotifier(this._petService, this._reflectionService, this._userId) : super(_initialPet) {
     _loadPetData(); // 초기화 시 Firebase에서 펫 데이터 로드
   }
 
@@ -33,11 +38,6 @@ class PetNotifier extends StateNotifier<Pet> {
     lastAttendanceDate: null,
   );
 
-  // 로컬 회고 기록 목록 (더미 데이터)
-  final List<Reflection> _reflections = [];
-
-  // 외부에서 회고 기록에 접근할 수 있도록 getter 제공
-  List<Reflection> get reflections => _reflections;
 
   // Firebase에서 펫 데이터 로드
   Future<void> _loadPetData() async {
@@ -132,7 +132,7 @@ class PetNotifier extends StateNotifier<Pet> {
   }
 
   // PLAY 액션 (일기 쓰기)
-  void performPlayAction(String answer, String question) {
+  Future<void> performPlayAction(String answer, String question) async {
     _updatePet(
       state.copyWith(
         experience: state.experience + 10, // +10 경험치
@@ -140,20 +140,26 @@ class PetNotifier extends StateNotifier<Pet> {
         lastReflectionDate: DateTime.now(),
       ),
     );
-    // 회고 기록 저장
-    _reflections.add(
-      Reflection(
-        id: uuid.v4(), // 고유 ID 생성
-        type: 'play',
-        question: question,
-        answer: answer,
-        timestamp: DateTime.now(),
-      ),
-    );
+    
+    // 회고 기록을 Firebase에 저장
+    if (_userId != null) {
+      try {
+        final reflection = Reflection(
+          id: uuid.v4(), // 고유 ID 생성
+          type: 'play',
+          question: question,
+          answer: answer,
+          timestamp: DateTime.now(),
+        );
+        await _reflectionService.addReflection(_userId, reflection);
+      } catch (e) {
+        // 에러 발생해도 펫 상태는 업데이트 유지
+      }
+    }
   }
 
   // FEED 액션 (주제 회고)
-  void performFeedAction(String answer, String question) {
+  Future<void> performFeedAction(String answer, String question) async {
     _updatePet(
       state.copyWith(
         experience: state.experience + 15, // +15 경험치
@@ -161,16 +167,22 @@ class PetNotifier extends StateNotifier<Pet> {
         lastReflectionDate: DateTime.now(),
       ),
     );
-    // 회고 기록 저장
-    _reflections.add(
-      Reflection(
-        id: uuid.v4(), // 고유 ID 생성
-        type: 'feed',
-        question: question,
-        answer: answer,
-        timestamp: DateTime.now(),
-      ),
-    );
+    
+    // 회고 기록을 Firebase에 저장
+    if (_userId != null) {
+      try {
+        final reflection = Reflection(
+          id: uuid.v4(), // 고유 ID 생성
+          type: 'feed',
+          question: question,
+          answer: answer,
+          timestamp: DateTime.now(),
+        );
+        await _reflectionService.addReflection(_userId, reflection);
+      } catch (e) {
+        // 에러 발생해도 펫 상태는 업데이트 유지
+      }
+    }
   }
 
   // 펫 이름 업데이트 메서드
@@ -182,24 +194,28 @@ class PetNotifier extends StateNotifier<Pet> {
 // 펫 상태를 제공하는 StateNotifierProvider (Firebase 통합)
 final petNotifierProvider = StateNotifierProvider<PetNotifier, Pet>((ref) {
   final petService = ref.watch(petServiceProvider);
+  final reflectionService = ref.watch(reflectionServiceProvider);
   final authState = ref.watch(authStateChangesProvider);
   
   return authState.when(
     data: (user) {
-      return PetNotifier(petService, user?.uid);
+      return PetNotifier(petService, reflectionService, user?.uid);
     },
-    loading: () => PetNotifier(petService, null),
-    error: (error, stack) => PetNotifier(petService, null),
+    loading: () => PetNotifier(petService, reflectionService, null),
+    error: (error, stack) => PetNotifier(petService, reflectionService, null),
   );
 });
 
-// 회고 기록 목록을 제공하는 Provider (로컬에서 관리)
-final reflectionsProvider = Provider<List<Reflection>>((ref) {
-  // PetNotifier에서 관리하는 _reflections 목록을 반환
-  final petNotifier = ref.watch(petNotifierProvider.notifier);
-  // 최신 기록부터 보여주기 위해 정렬
-  return [...petNotifier.reflections]
-    ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+// 회고 기록 목록을 제공하는 StreamProvider (Firebase에서 관리)
+final reflectionsProvider = StreamProvider<List<Reflection>>((ref) {
+  final reflectionService = ref.watch(reflectionServiceProvider);
+  final userId = ref.watch(userUidProvider);
+  
+  if (userId == null) {
+    return Stream.value(<Reflection>[]);
+  }
+  
+  return reflectionService.getReflectionsStream(userId);
 });
 
 // 사용자 UID 제공 (Firebase Auth에서 가져옴)

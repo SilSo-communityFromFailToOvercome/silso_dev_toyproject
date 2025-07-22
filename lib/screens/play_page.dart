@@ -390,7 +390,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
     );
   }
 
-  void _submitDiary(BuildContext context) {
+  Future<void> _submitDiary(BuildContext context) async {
     if (_textController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -409,35 +409,65 @@ class _PlayPageState extends ConsumerState<PlayPage> {
       return;
     }
 
-    ref.read(petNotifierProvider.notifier).performPlayAction(
-      _textController.text.trim(),
-      _reflectionQuestion,
+    // Show loading indicator while saving
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
     );
-    
-    Navigator.pop(context); // Close modal
-    Navigator.pop(context); // Return to main page
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: AppConstants.smallPadding),
-            Expanded(
-              child: Text(
-                'Diary saved! (+10 EXP, +20 Happiness)',
-                style: TextStyle(fontWeight: FontWeight.w600),
+
+    try {
+      await ref.read(petNotifierProvider.notifier).performPlayAction(
+        _textController.text.trim(),
+        _reflectionQuestion,
+      );
+      
+      Navigator.pop(context); // Close loading dialog
+      Navigator.pop(context); // Close modal
+      Navigator.pop(context); // Return to main page
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: AppConstants.smallPadding),
+              Expanded(
+                child: Text(
+                  'Diary saved! (+10 EXP, +20 Happiness)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          backgroundColor: AppConstants.successColor,
+          duration: AppConstants.snackBarDuration,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+          ),
         ),
-        backgroundColor: AppConstants.successColor,
-        duration: AppConstants.snackBarDuration,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+      );
+    } catch (e) {
+      Navigator.pop(context); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error, color: Colors.white),
+              SizedBox(width: AppConstants.smallPadding),
+              Text('Failed to save diary. Please try again.'),
+            ],
+          ),
+          backgroundColor: AppConstants.warningColor,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
         ),
-      ),
-    );
+      );
+    }
   }
 }

@@ -10,8 +10,8 @@ class PlayHistoryPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 로컬 reflectionsProvider에서 회고 기록 목록 가져오기
-    final reflections = ref.watch(reflectionsProvider);
+    // Firebase reflectionsProvider에서 회고 기록 목록 가져오기
+    final reflectionsAsync = ref.watch(reflectionsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -22,16 +22,47 @@ class PlayHistoryPage extends ConsumerWidget {
         title: const Text('Reflection History'),
         centerTitle: true,
       ),
-      body: reflections.isEmpty
-          ? _buildEmptyState(context)
-          : ListView.builder(
-              padding: const EdgeInsets.all(AppConstants.defaultPadding),
-              itemCount: reflections.length,
-              itemBuilder: (context, index) {
-                final reflection = reflections[index];
-                return _buildReflectionCard(context, reflection);
-              },
-            ),
+      body: reflectionsAsync.when(
+        data: (reflections) => reflections.isEmpty
+            ? _buildEmptyState(context)
+            : ListView.builder(
+                padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                itemCount: reflections.length,
+                itemBuilder: (context, index) {
+                  final reflection = reflections[index];
+                  return _buildReflectionCard(context, reflection);
+                },
+              ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 80,
+                color: Colors.red.shade400,
+              ),
+              const SizedBox(height: AppConstants.defaultPadding),
+              Text(
+                'Failed to load reflections',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.red.shade600,
+                ),
+              ),
+              const SizedBox(height: AppConstants.smallPadding),
+              Text(
+                'Please try again later',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -48,36 +48,49 @@ class ActionButtonWidget extends StatelessWidget {
         disabledBackgroundColor: Colors.grey.shade300,
         disabledForegroundColor: Colors.grey.shade600,
       ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minWidth: MediaQuery.of(context).size.width < 400 ? 60 : 80,
-          minHeight: MediaQuery.of(context).size.width < 400 ? 50 : 60,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon, 
-              size: 28,
-              color: isEnabled 
-                  ? (foregroundColor ?? Colors.white)
-                  : Colors.grey.shade600,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isSmallScreen = MediaQuery.of(context).size.width < 400;
+          final iconSize = isSmallScreen ? 24.0 : 28.0;
+          final fontSize = isSmallScreen ? 12.0 : 14.0;
+          
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: isSmallScreen ? 50 : 70,
+              minHeight: isSmallScreen ? 45 : 55,
+              maxWidth: constraints.maxWidth,
             ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isEnabled 
-                    ? (foregroundColor ?? Colors.white)
-                    : Colors.grey.shade600,
-              ),
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon, 
+                  size: iconSize,
+                  color: isEnabled 
+                      ? (foregroundColor ?? Colors.white)
+                      : Colors.grey.shade600,
+                ),
+                SizedBox(height: isSmallScreen ? 4 : 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.w600,
+                      color: isEnabled 
+                          ? (foregroundColor ?? Colors.white)
+                          : Colors.grey.shade600,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
 
@@ -156,37 +169,53 @@ class ActionButtonRow extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
     
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
-            child: CleanActionButton(
-              onPressed: onCleanPressed,
-              isEnabled: isCleanEnabled,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        final buttonSpacing = isSmallScreen ? 4.0 : 8.0;
+        
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Flexible(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: (availableWidth - buttonSpacing * 2) / 3,
+                ),
+                padding: EdgeInsets.symmetric(horizontal: buttonSpacing / 2),
+                child: CleanActionButton(
+                  onPressed: onCleanPressed,
+                  isEnabled: isCleanEnabled,
+                ),
+              ),
             ),
-          ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
-            child: PlayActionButton(
-              onPressed: onPlayPressed,
-              isEnabled: isPlayEnabled,
+            Flexible(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: (availableWidth - buttonSpacing * 2) / 3,
+                ),
+                padding: EdgeInsets.symmetric(horizontal: buttonSpacing / 2),
+                child: PlayActionButton(
+                  onPressed: onPlayPressed,
+                  isEnabled: isPlayEnabled,
+                ),
+              ),
             ),
-          ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
-            child: FeedActionButton(
-              onPressed: onFeedPressed,
-              isEnabled: isFeedEnabled,
+            Flexible(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: (availableWidth - buttonSpacing * 2) / 3,
+                ),
+                padding: EdgeInsets.symmetric(horizontal: buttonSpacing / 2),
+                child: FeedActionButton(
+                  onPressed: onFeedPressed,
+                  isEnabled: isFeedEnabled,
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
