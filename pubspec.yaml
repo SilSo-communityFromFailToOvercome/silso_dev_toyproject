@@ -43,7 +43,9 @@ dependencies:
   cloud_firestore: ^4.17.1
   lottie: ^3.3.0
   intl: ^0.19.0
-  flutter_inappwebview: ^6.0.0
+  webview_flutter: ^4.4.4
+  webview_flutter_android: ^4.8.2
+  webview_flutter_wkwebview: ^3.22.1
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +79,36 @@ flutter:
     - assets/images/egg_state5.png
     - assets/images/egg_state6.png
     - assets/animations/Wipe_clean_icon.json
+    - assets/Egg_flight/Egg_flight/
+    - assets/Egg_flight/Egg_flight/audio/airplane-crash-1.mp3
+    - assets/Egg_flight/Egg_flight/audio/airplane-crash-2.mp3
+    - assets/Egg_flight/Egg_flight/audio/airplane-crash-3.mp3
+    - assets/Egg_flight/Egg_flight/audio/airplane-crash-4.mp3
+    - assets/Egg_flight/Egg_flight/audio/bubble.mp3
+    - assets/Egg_flight/Egg_flight/audio/bullet-impact-rock.mp3
+    - assets/Egg_flight/Egg_flight/audio/coin-1.mp3
+    - assets/Egg_flight/Egg_flight/audio/coin-2.mp3
+    - assets/Egg_flight/Egg_flight/audio/coin-3.mp3
+    - assets/Egg_flight/Egg_flight/audio/coin.mp3
+    - assets/Egg_flight/Egg_flight/audio/jar-1.mp3
+    - assets/Egg_flight/Egg_flight/audio/jar-2.mp3
+    - assets/Egg_flight/Egg_flight/audio/jar-3.mp3
+    - assets/Egg_flight/Egg_flight/audio/jar-4.mp3
+    - assets/Egg_flight/Egg_flight/audio/jar-5.mp3
+    - assets/Egg_flight/Egg_flight/audio/jar-6.mp3
+    - assets/Egg_flight/Egg_flight/audio/jar-7.mp3
+    - assets/Egg_flight/Egg_flight/audio/ocean.mp3
+    - assets/Egg_flight/Egg_flight/audio/propeller.mp3
+    - assets/Egg_flight/Egg_flight/audio/rock-shatter-1.mp3
+    - assets/Egg_flight/Egg_flight/audio/rock-shatter-2.mp3
+    - assets/Egg_flight/Egg_flight/audio/shot-hard.mp3
+    - assets/Egg_flight/Egg_flight/audio/shot-soft.mp3
+    - assets/Egg_flight/Egg_flight/audio/water-splash.mp3
+    - assets/Egg_flight/Egg_flight/game.css
+    - assets/Egg_flight/Egg_flight/game.js
+    - assets/Egg_flight/Egg_flight/index.html
+    - assets/Egg_flight/Egg_flight/models/heart.mtl
+    - assets/Egg_flight/Egg_flight/models/heart.obj
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
