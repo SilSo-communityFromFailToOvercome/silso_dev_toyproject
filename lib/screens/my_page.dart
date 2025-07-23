@@ -12,6 +12,7 @@ import '../widgets/pet_task_animation_widget.dart';
 import './clean_page.dart';
 import './play_page.dart';
 import './feed_page.dart';
+import './community_page.dart';
 
 class MyPageScreen extends ConsumerWidget {
   const MyPageScreen({super.key});
@@ -371,7 +372,23 @@ class MyPageScreen extends ConsumerWidget {
         currentIndex: 2, // My Page 선택된 상태
         selectedItemColor: Colors.amber[800],
         onTap: (index) {
-          // TODO: 네비게이션 바 기능 구현
+          switch (index) {
+            case 0:
+              // Home - already on MyPage, no action needed
+              break;
+            case 1:
+              // Community
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CommunityPage(),
+                ),
+              );
+              break;
+            case 2:
+              // My Page - already on this page, no action needed
+              break;
+          }
         },
       ),
     );
