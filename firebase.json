@@ -1,1 +1,45 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"toyproject-mypage","appId":"1:301811027373:android:c2290180eb4588eb22e524","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"toyproject-mypage","appId":"1:301811027373:ios:87a17a1d4e13532b22e524","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"toyproject-mypage","configurations":{"android":"1:301811027373:android:c2290180eb4588eb22e524","ios":"1:301811027373:ios:87a17a1d4e13532b22e524","web":"1:301811027373:web:34913d353cf5282d22e524"}}}}}}
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "toyproject-mypage",
+          "appId": "1:301811027373:android:c2290180eb4588eb22e524",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "toyproject-mypage",
+          "appId": "1:301811027373:ios:87a17a1d4e13532b22e524",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "toyproject-mypage",
+          "configurations": {
+            "android": "1:301811027373:android:c2290180eb4588eb22e524",
+            "ios": "1:301811027373:ios:87a17a1d4e13532b22e524",
+            "web": "1:301811027373:web:34913d353cf5282d22e524"
+          }
+        }
+      }
+    }
+  }
+}

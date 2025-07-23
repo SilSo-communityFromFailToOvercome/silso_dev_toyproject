@@ -1,6 +1,7 @@
 // lib/screens/play_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'egg_flight_game_screen.dart';
 import '../providers/pet_notifier.dart';
 import '../models/pet.dart';
 import '../constants/app_constants.dart';
@@ -371,7 +372,9 @@ class _PlayPageState extends ConsumerState<PlayPage> {
         Expanded(
           flex: 2,
           child: ElevatedButton(
-            onPressed: () => _submitDiary(context),
+            onPressed: () async {
+              await _submitDiaryAndStartGame(context);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppConstants.happinessColor,
               foregroundColor: Colors.white,
@@ -390,7 +393,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
     );
   }
 
-  Future<void> _submitDiary(BuildContext context) async {
+  Future<void> _submitDiaryAndStartGame(BuildContext context) async {
     if (_textController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -421,6 +424,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
     );
 
     try {
+      // Save the diary without additional navigation
       await ref.read(petNotifierProvider.notifier).performPlayAction(
         _textController.text.trim(),
         _reflectionQuestion,
@@ -428,30 +432,73 @@ class _PlayPageState extends ConsumerState<PlayPage> {
       
       Navigator.pop(context); // Close loading dialog
       Navigator.pop(context); // Close modal
-      Navigator.pop(context); // Return to main page
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: AppConstants.smallPadding),
-              Expanded(
-                child: Text(
-                  'Diary saved! (+10 EXP, +20 Happiness)',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
+      // Brief delay to ensure modal is closed
+      await Future.delayed(const Duration(milliseconds: 200));
+      
+      // Launch the egg flight game
+      if (mounted) {
+        debugPrint('Launching egg flight game...');
+        try {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EggFlightGameScreen(
+                onGameComplete: () {
+                  debugPrint('Egg flight game completed!');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('🎉 Great job! Your pet is happy with your diary entry!'),
+                        duration: Duration(seconds: 3),
+                        backgroundColor: AppConstants.successColor,
+                      ),
+                    );
+                  }
+                },
               ),
-            ],
+            ),
+          );
+          debugPrint('Returned from egg flight game');
+        } catch (gameError) {
+          debugPrint('Error launching game: $gameError');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Could not start game, but your diary was saved successfully!'),
+                duration: Duration(seconds: 3),
+                backgroundColor: AppConstants.warningColor,
+              ),
+            );
+          }
+        }
+      }
+      
+      // Show success message after returning from game
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: AppConstants.smallPadding),
+                Expanded(
+                  child: Text(
+                    'Diary saved! (+10 EXP, +20 Happiness)',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppConstants.successColor,
+            duration: AppConstants.snackBarDuration,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+            ),
           ),
-          backgroundColor: AppConstants.successColor,
-          duration: AppConstants.snackBarDuration,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
-          ),
-        ),
-      );
+        );
+      }
     } catch (e) {
       Navigator.pop(context); // Close loading dialog
       ScaffoldMessenger.of(context).showSnackBar(
@@ -470,4 +517,5 @@ class _PlayPageState extends ConsumerState<PlayPage> {
       );
     }
   }
+
 }
