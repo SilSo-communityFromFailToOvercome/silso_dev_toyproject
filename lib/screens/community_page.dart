@@ -231,26 +231,32 @@ class CommunityPage extends ConsumerWidget {
                     color: Colors.grey.shade500,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    '${community.memberCount} members',
-                    style: GoogleFonts.pixelifySans(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
+                  Flexible(
+                    child: Text(
+                      '${community.memberCount} members',
+                      style: GoogleFonts.pixelifySans(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getCategoryColor(community.category),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      community.category.displayName,
-                      style: GoogleFonts.pixelifySans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _getCategoryColor(community.category),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        community.category.displayName,
+                        style: GoogleFonts.pixelifySans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
