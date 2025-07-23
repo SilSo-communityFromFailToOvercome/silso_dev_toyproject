@@ -1,0 +1,46 @@
+<!-- Copied and modified from http://games-aviator.com/ -->
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>The Aviator 2</title>
+	<meta name="description" content="An extension of Karim Maaloul's game The Aviator." />
+	<meta name="keywords" content="three.js, game, aviator, browser, javascript" />
+	<meta name="author" content="Michel Helms for Codrops" />
+	<link rel="icon" type="image/png" href="favicon.png"/>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="/game.css" />
+	<script src="https://cdn.jsdelivr.net/npm/three@0.139.2/build/three.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.139.2/examples/js/loaders/OBJLoader.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.139.2/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.10.2/gsap.min.js"></script>
+</head>
+<body>
+	<div class="game-holder" id="gameHolder">
+		<div class="header">
+			<div class="score" id="score">
+				<div class="score__content score__content--fixed" id="dist">
+					<div class="score__label">distance</div>
+					<div class="score__value score__value--dist" id="distValue">0</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="world" id="world">
+			<canvas id="threejs-canvas"></canvas>
+		</div>
+
+		<div class="message--replay" id="replayMessage">
+			GAME OVER!
+		</div>
+
+		<div id="intro-screen" class="visible">
+			<button type="button">Start</button>
+		</div>
+	</div>
+	<script type="text/javascript" src="/game.js"></script>
+</body>
+</html>

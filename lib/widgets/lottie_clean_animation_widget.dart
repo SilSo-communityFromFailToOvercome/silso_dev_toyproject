@@ -83,12 +83,19 @@ class _LottieCleanAnimationWidgetState extends ConsumerState<LottieCleanAnimatio
   
   bool _isAnimationComplete = false;
   bool _showLottie = true;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _startAnimation();
+    
+    // Delay animation start until after first frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_isAnimationComplete) {
+        _startAnimation();
+      }
+    });
   }
 
   /// Initialize modal and sparkle animations to complement Lottie
@@ -120,12 +127,15 @@ class _LottieCleanAnimationWidgetState extends ConsumerState<LottieCleanAnimatio
 
   /// Start the modal and complementary animations
   void _startAnimation() {
+    if (_isInitialized || _isAnimationComplete) return;
+    _isInitialized = true;
+    
     // Show modal with entrance animation
     _modalController.forward();
     
     // Start sparkle effect slightly delayed to complement Lottie
     Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
+      if (mounted && !_isAnimationComplete) {
         _sparkleController.forward();
       }
     });
@@ -133,43 +143,80 @@ class _LottieCleanAnimationWidgetState extends ConsumerState<LottieCleanAnimatio
 
   /// Handle Lottie animation completion
   void _onLottieAnimationComplete() {
-    if (!_isAnimationComplete) {
-      _isAnimationComplete = true;
-      
-      // For already completed case, dismiss quickly
-      // For first time case, wait longer for celebration
-      final delayDuration = widget.quickDismiss 
-        ? const Duration(milliseconds: 300)
-        : const Duration(milliseconds: 800);
-      
-      Future.delayed(delayDuration, () {
-        if (mounted) {
-          _dismissModal();
-        }
-      });
+    if (_isAnimationComplete || !mounted) {
+      return; // Prevent duplicate calls or call on unmounted widget
     }
+    
+    // For already completed case, dismiss quickly
+    // For first time case, wait longer for celebration
+    final delayDuration = widget.quickDismiss 
+      ? const Duration(milliseconds: 300)
+      : const Duration(milliseconds: 800);
+    
+    Future.delayed(delayDuration, () {
+      if (mounted && !_isAnimationComplete && _isInitialized) {
+        _dismissModal();
+      }
+    });
   }
 
   /// Dismiss the modal with exit animation
+  /// FIX: Enhanced dismissal with better state coordination
   void _dismissModal() {
+    if (_isAnimationComplete || !mounted) {
+      return; // Prevent multiple dismissals or dismiss on unmounted widget
+    }
+    _isAnimationComplete = true;
+    
+    print('DEBUG: LottieCleanAnimationWidget dismissing modal');
+    
+    // Cancel any pending sparkle animations
+    _sparkleController.stop();
+    
     _modalController.reverse().then((_) {
       if (mounted) {
-        // Clear animation state in PetNotifier
-        ref.read(petNotifierProvider.notifier).clearAnimationState();
+        // Clear animation state in PetNotifier first
+        try {
+          ref.read(petNotifierProvider.notifier).clearAnimationState();
+          print('DEBUG: Animation state cleared in PetNotifier');
+        } catch (e) {
+          // Handle case where provider is no longer available
+          print('DEBUG: Failed to clear animation state: $e');
+        }
         
-        // Trigger completion callback
-        widget.onAnimationComplete?.call();
+        // Trigger completion callback BEFORE removing modal
+        if (widget.onAnimationComplete != null) {
+          try {
+            widget.onAnimationComplete!.call();
+            print('DEBUG: Animation completion callback triggered');
+          } catch (e) {
+            // Handle callback errors gracefully
+            print('DEBUG: Animation callback error: $e');
+          }
+        }
         
-        // Remove modal from widget tree
+        // Remove modal from widget tree AFTER callback
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
+          print('DEBUG: Modal dismissed from widget tree');
         }
+      }
+    }).catchError((error) {
+      // Handle animation errors gracefully
+      print('DEBUG: Animation dismissal error: $error');
+      if (mounted && widget.onAnimationComplete != null) {
+        widget.onAnimationComplete!.call();
+      }
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
       }
     });
   }
 
   /// Handle Lottie loading errors gracefully
   void _onLottieError() {
+    if (!mounted || _isAnimationComplete) return;
+    
     setState(() {
       _showLottie = false;
     });
@@ -181,7 +228,7 @@ class _LottieCleanAnimationWidgetState extends ConsumerState<LottieCleanAnimatio
       : const Duration(milliseconds: 2000);
       
     Future.delayed(fallbackDuration, () {
-      if (mounted) {
+      if (mounted && !_isAnimationComplete && _isInitialized) {
         _dismissModal();
       }
     });
@@ -189,8 +236,15 @@ class _LottieCleanAnimationWidgetState extends ConsumerState<LottieCleanAnimatio
 
   @override
   void dispose() {
+    // Mark as complete to prevent any pending callbacks
+    _isAnimationComplete = true;
+    
+    // Stop and dispose animation controllers
+    _modalController.stop();
+    _sparkleController.stop();
     _modalController.dispose();
     _sparkleController.dispose();
+    
     super.dispose();
   }
 
@@ -202,7 +256,7 @@ class _LottieCleanAnimationWidgetState extends ConsumerState<LottieCleanAnimatio
         return Material(
           color: Colors.transparent,
           child: GestureDetector(
-            onTap: _dismissModal, // Allow tap to dismiss
+            onTap: widget.quickDismiss ? _dismissModal : null, // Only allow tap dismiss for already completed
             child: Container(
               color: Colors.black.withOpacity(0.4 * _modalOpacityAnimation.value),
               child: Center(
@@ -308,12 +362,20 @@ class _LottieCleanAnimationWidgetState extends ConsumerState<LottieCleanAnimatio
         fit: BoxFit.contain,
         repeat: false, // Play once
         onLoaded: (composition) {
-          // Calculate animation duration and set completion callback
-          final duration = composition.duration;
-          Future.delayed(duration, _onLottieAnimationComplete);
+          // Only set completion callback if widget is still mounted and not completed
+          if (mounted && !_isAnimationComplete && _isInitialized) {
+            final duration = composition.duration;
+            Future.delayed(duration, () {
+              if (mounted && !_isAnimationComplete) {
+                _onLottieAnimationComplete();
+              }
+            });
+          }
         },
         errorBuilder: (context, error, stackTrace) {
-          _onLottieError();
+          if (mounted && !_isAnimationComplete) {
+            _onLottieError();
+          }
           return _buildFallbackAnimation();
         },
       );

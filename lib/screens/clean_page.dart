@@ -16,6 +16,7 @@ class CleanPage extends ConsumerStatefulWidget {
 class _CleanPageState extends ConsumerState<CleanPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  bool _isProcessingCheckIn = false; // Prevent multiple check-in attempts
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +29,11 @@ class _CleanPageState extends ConsumerState<CleanPage> {
         pet.lastAttendanceDate!.year == today.year &&
         pet.lastAttendanceDate!.month == today.month &&
         pet.lastAttendanceDate!.day == today.day;
+    
+    // DEBUG: Log attendance status
+    print('DEBUG CleanPage - Today: ${today.toString()}');
+    print('DEBUG CleanPage - Last Attendance Date: ${pet.lastAttendanceDate.toString()}');
+    print('DEBUG CleanPage - Already Attended: $alreadyAttended');
 
     return Scaffold(
       appBar: AppBar(
@@ -36,6 +42,21 @@ class _CleanPageState extends ConsumerState<CleanPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          // DEBUG: Reset button for testing
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              petNotifier.resetAttendanceForToday();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('DEBUG: Attendance status reset'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Container(
         color: Colors.black.withOpacity(0.3),
@@ -165,7 +186,7 @@ class _CleanPageState extends ConsumerState<CleanPage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: () => _performCheckIn(context, petNotifier),
+        onPressed: _isProcessingCheckIn ? null : () => _performCheckIn(context, petNotifier),
         icon: const Icon(Icons.cleaning_services),
         label: const Text('Check In Now!'),
         style: ElevatedButton.styleFrom(
@@ -208,13 +229,15 @@ class _CleanPageState extends ConsumerState<CleanPage> {
   void _showAlreadyAttendedAnimation(BuildContext context) {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       barrierColor: Colors.transparent,
       builder: (BuildContext dialogContext) {
         return LottieCleanAnimationWidget.alreadyCompleted(
           onAnimationComplete: () {
-            // Close the clean page after animation
-            Navigator.pop(context);
+            // Close the clean page after animation - only pop once
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
           },
         );
       },
@@ -222,30 +245,77 @@ class _CleanPageState extends ConsumerState<CleanPage> {
   }
 
   void _performCheckIn(BuildContext context, PetNotifier petNotifier) {
-    petNotifier.performCleanAction();
-    Navigator.pop(context);
+    // Prevent multiple simultaneous check-ins
+    if (_isProcessingCheckIn) return;
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: AppConstants.smallPadding),
-            const Expanded(
-              child: Text(
-                'Pet is now clean! (+5 EXP, +20 Cleanliness)',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppConstants.successColor,
-        duration: AppConstants.snackBarDuration,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
-        ),
-      ),
+    setState(() {
+      _isProcessingCheckIn = true;
+    });
+    
+    // FIX: Perform clean action WITHOUT setting animation triggers
+    // We handle the animation locally in clean_page, not in MyPage
+    petNotifier.performCleanAction();
+    
+    // Show immediate animation before navigation
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (BuildContext dialogContext) {
+        return LottieCleanAnimationWidget(
+          onAnimationComplete: () {
+            // Ensure callback only runs once per dialog
+            if (!_isProcessingCheckIn) return;
+            
+            print('DEBUG: LottieCleanAnimationWidget completed in clean_page');
+            
+            // FIX: Clear any animation state that might have been set
+            // This prevents duplicate modal triggers when returning to MyPage
+            petNotifier.clearAnimationState();
+            print('DEBUG: Animation state cleared after Lottie completion');
+            
+            // Close clean page after animation completes
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+            
+            // Show success snackbar on my_page with delayed execution
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.white),
+                        const SizedBox(width: AppConstants.smallPadding),
+                        const Expanded(
+                          child: Text(
+                            'Pet is now clean! (+5 EXP, +20 Cleanliness)',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: AppConstants.successColor,
+                    duration: AppConstants.snackBarDuration,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+                    ),
+                  ),
+                );
+              }
+            });
+            
+            // Reset processing state after completion
+            if (mounted) {
+              setState(() {
+                _isProcessingCheckIn = false;
+              });
+            }
+          },
+        );
+      },
     );
   }
 }

@@ -55,9 +55,11 @@ class PetNotifier extends StateNotifier<Pet> {
     try {
       final pet = await _petService.getPet(_userId);
       if (pet != null) {
+        print('DEBUG _loadPetData - Loaded pet from Firebase: lastAttendanceDate = ${pet.lastAttendanceDate}');
         // 로드된 펫에 decay 적용
         final decayedPet = pet.applyDecay();
         state = decayedPet;
+        print('DEBUG _loadPetData - After decay: lastAttendanceDate = ${decayedPet.lastAttendanceDate}');
         
         // decay가 적용되었다면 Firebase에 저장
         if (pet != decayedPet) {
@@ -65,10 +67,13 @@ class PetNotifier extends StateNotifier<Pet> {
         }
       } else {
         // 펫이 존재하지 않으면 새로 생성
+        print('DEBUG _loadPetData - Creating new pet with initial state: lastAttendanceDate = ${_initialPet.lastAttendanceDate}');
         await _petService.createPet(_userId, _initialPet);
+        state = _initialPet;
       }
     } catch (e) {
-      // 에러 발생 시 로컬 상태 유지 (디버그용 출력 제거)
+      print('DEBUG _loadPetData - Error loading pet data: $e');
+      // 에러 발생 시 로컬 상태 유지
     }
   }
 
@@ -168,8 +173,42 @@ class PetNotifier extends StateNotifier<Pet> {
     _savePetData();
   }
 
-  // CLEAN 액션 (출석체크)
+  // CLEAN 액션 (출석체크) - No animation triggers for immediate Lottie handling
   void performCleanAction() {
+    // 액션 전에 decay 적용
+    _ensureDecayApplied();
+    
+    final today = DateTime.now();
+
+    // DEBUG: Log clean action attempt
+    print('DEBUG performCleanAction - Today: ${today.toString()}');
+    print('DEBUG performCleanAction - Last Attendance: ${state.lastAttendanceDate.toString()}');
+
+    // 오늘 이미 출석했는지 확인
+    if (state.lastAttendanceDate != null &&
+        state.lastAttendanceDate!.year == today.year &&
+        state.lastAttendanceDate!.month == today.month &&
+        state.lastAttendanceDate!.day == today.day) {
+      print('DEBUG performCleanAction - Already attended today, returning');
+      return; // 이미 출석했으면 아무것도 하지 않음
+    }
+
+    // FIX: Update pet stats but DON'T set animation triggers
+    // Animation is handled directly in clean_page with LottieCleanAnimationWidget
+    _updatePet(
+      state.copyWith(
+        experience: state.experience + 5, // +5 경험치
+        cleanliness: (state.cleanliness + 20).clamp(0, 100), // 청결도 +20 (최대 100)
+        lastAttendanceDate: today, // 마지막 출석 날짜 기록
+        // FIX: Don't set animation triggers to prevent duplicate modals
+        // lastCompletedTask: 'clean',        // ← Removed
+        // animationTriggerTime: DateTime.now(), // ← Removed
+      ),
+    );
+  }
+
+  // CLEAN 액션 with animation trigger (for direct MyPage usage if needed)
+  void performCleanActionWithAnimation() {
     // 액션 전에 decay 적용
     _ensureDecayApplied();
     
@@ -188,7 +227,7 @@ class PetNotifier extends StateNotifier<Pet> {
         experience: state.experience + 5, // +5 경험치
         cleanliness: (state.cleanliness + 20).clamp(0, 100), // 청결도 +20 (최대 100)
         lastAttendanceDate: today, // 마지막 출석 날짜 기록
-        // Animation trigger for CLEAN task completion
+        // Animation trigger for CLEAN task completion (MyPage usage)
         lastCompletedTask: 'clean',
         animationTriggerTime: DateTime.now(),
       ),
@@ -310,6 +349,22 @@ class PetNotifier extends StateNotifier<Pet> {
   /// This prevents the same animation from playing multiple times
   void clearAnimationState() {
     state = state.clearAnimationState();
+    _savePetData();
+  }
+
+  // DEBUG/TESTING: Reset attendance status
+  void resetAttendanceForToday() {
+    print('DEBUG: Resetting attendance status');
+    state = state.copyWith(
+      lastAttendanceDate: null,
+    );
+    _savePetData();
+  }
+
+  // DEBUG/TESTING: Reset pet to initial state
+  void resetPetToInitial() {
+    print('DEBUG: Resetting pet to initial state');
+    state = _initialPet;
     _savePetData();
   }
 }
