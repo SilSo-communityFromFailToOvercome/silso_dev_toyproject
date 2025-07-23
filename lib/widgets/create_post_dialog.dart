@@ -36,36 +36,50 @@ class _CreatePostDialogState extends ConsumerState<CreatePostDialog> {
   @override
   Widget build(BuildContext context) {
     final postState = ref.watch(postNotifierProvider);
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final availableHeight = screenHeight - keyboardHeight - 100; // 100px padding
 
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 600),
-        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(
+          maxHeight: availableHeight > 400 ? availableHeight : 400,
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Text(
-                  'Create Post',
-                  style: GoogleFonts.pixelifySans(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.primaryBorder,
+            // Fixed header
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Row(
+                children: [
+                  Text(
+                    'Create Post',
+                    style: GoogleFonts.pixelifySans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.primaryBorder,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
             
             // Post type selection
             Text(
@@ -124,8 +138,11 @@ class _CreatePostDialogState extends ConsumerState<CreatePostDialog> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               ),
               maxLength: 100,
+              maxLines: 2,
+              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 16),
 
@@ -139,7 +156,8 @@ class _CreatePostDialogState extends ConsumerState<CreatePostDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            Expanded(
+            SizedBox(
+              height: 120,
               child: TextField(
                 controller: _contentController,
                 decoration: InputDecoration(
@@ -148,10 +166,12 @@ class _CreatePostDialogState extends ConsumerState<CreatePostDialog> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignLabelWithHint: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
                 maxLines: null,
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
+                textInputAction: TextInputAction.newline,
               ),
             ),
             const SizedBox(height: 16),
@@ -176,8 +196,10 @@ class _CreatePostDialogState extends ConsumerState<CreatePostDialog> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                     onSubmitted: _addTag,
+                    textInputAction: TextInputAction.done,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -205,51 +227,60 @@ class _CreatePostDialogState extends ConsumerState<CreatePostDialog> {
                 }).toList(),
               ),
             ],
-            const SizedBox(height: 20),
-
-            // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.pixelifySans(
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+            // Fixed action buttons
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.grey.shade200)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.pixelifySans(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: postState.isLoading ? null : _submitPost,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primaryBorder,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: postState.isLoading ? null : _submitPost,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppConstants.primaryBorder,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
+                      child: postState.isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Text(
+                              'Post',
+                              style: GoogleFonts.pixelifySans(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
-                    child: postState.isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Text(
-                            'Post',
-                            style: GoogleFonts.pixelifySans(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
